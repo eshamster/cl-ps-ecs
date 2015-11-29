@@ -16,11 +16,14 @@
   :version "0.1"
   :author "eshamster"
   :license ""
-  :depends-on ()
+  :depends-on (:parenscript
+               :ps-experiment)
   :components ((:module "src"
+                :serial t
                 :components
-                ((:file "cl-ps-ecs"))))
-  :description ""
+                ((:file "ecs")
+                 (:file "cl-ps-ecs"))))
+  :description "[WIP] Entity-Component-System written by ParenScript (Common Lisp) "
   :long-description
   #.(with-open-file (stream (merge-pathnames
                              #p"README.markdown"

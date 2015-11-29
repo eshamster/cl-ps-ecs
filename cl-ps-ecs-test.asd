@@ -12,10 +12,15 @@
   :author "eshamster"
   :license ""
   :depends-on (:cl-ps-ecs
+               :parenscript
+               :ps-experiment
+               :ps-experiment-test
+               :cl-js
                :prove)
   :components ((:module "t"
                 :components
-                ((:test-file "cl-ps-ecs"))))
+                ((:test-file "ecs")
+                 (:test-file "cl-ps-ecs"))))
   :description "Test system for cl-ps-ecs"
 
   :defsystem-depends-on (:prove-asdf)
