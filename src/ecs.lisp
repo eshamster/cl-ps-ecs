@@ -6,33 +6,35 @@
   (:export :includes-all-component-types))
 (in-package :cl-ps-ecs.ecs)
 
-;; ;; ---- component ---- ;;
-;; (defstruct.ps+ ecs-component)
+;; ---- component ---- ;;
+;; This has dummy data to avoid error in cl-js:js-run with Clozure CL
+(defstruct.ps+ ecs-component
+    dummy)
 
-;; ;; ---- entity ---- ;;
-;; (defvar.ps+ *entity-id-counter* 0)
+;; ---- entity ---- ;;
+(defvar.ps+ *entity-id-counter* 0)
 
-;; (defstruct.ps+ ecs-entity
-;;   (id (incf *entity-id-counter*))
-;;   (components nil)
-;;   parent
-;;   (children '()))
+(defstruct.ps+ ecs-entity
+  (id (incf *entity-id-counter*))
+  (components nil)
+  parent
+  (children '()))
 
-;; (defvar.ps *entity-tree-head* (make-ecs-entity))
+(defvar.ps *entity-tree-head* (make-ecs-entity))
 
-;; ;; ---- system ---- ;;
-;; (defvar.ps+ *ecs-system-list* nil)
+;; ---- system ---- ;;
+(defvar.ps+ *ecs-system-list* nil)
 
-;; (defstruct.ps+ ecs-system
-;;   (enable t)
-;;   (target-entities '())
-;;   (target-component-types '())
-;;   (process (lambda ())))
+(defstruct.ps+ ecs-system
+  (enable t)
+  (target-entities '())
+  (target-component-types '())
+  (process (lambda ())))
 
-;; (defun.ps+ ecs-main ()
-;;   (dolist (system *ecs-system-list*)
-;;     (when (ecs-system-enable system)
-;;       (funcall (ecs-system-process system)))))
+(defun.ps+ ecs-main ()
+  (dolist (system *ecs-system-list*)
+    (when (ecs-system-enable system)
+      (funcall (ecs-system-process system)))))
 
 ;; ---- Cross cutting ---- ;;
 
