@@ -39,8 +39,10 @@
                            (add-ecs-entity parent)
                            (add-ecs-entity child parent)
                            (eq (nth 0 (sample-entity-children parent)) child)))))
-    (prove-in-both (is-error (add-ecs-entity (make-not-entity))
-                             'type-error)))
+    (locally
+        (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
+      (prove-in-both (is-error (add-ecs-entity (make-not-entity))
+                               'type-error))))
   (subtest
       "Test process-all-entities"
     (with-add-entity
@@ -53,7 +55,20 @@
                              (process-all-entities (lambda (ent)
                                                      (incf sum (sample-entity-a ent))))
                              sum)
-                           10)))))
+                           10))))
+  (subtest
+      "Test find-a-entity"
+    (with-add-entity
+      (prove-in-both (is (let ((entity (make-sample-entity :a 1)))
+                           (add-ecs-entity entity)
+                           (add-ecs-entity (make-sample-entity :a 2))
+                           (add-ecs-entity (make-sample-entity :a 3) entity)
+                           (add-ecs-entity (make-sample-entity :a 4) entity)
+                           (sample-entity-a
+                            (find-a-entity (lambda (ent)
+                                             (and (sample-entity-p ent)
+                                                  (= (sample-entity-a ent) 3))))))
+                         3)))))
 
 (defstruct.ps+ test1 a b)
 (defstruct.ps+ (test2 (:include test1)) c)

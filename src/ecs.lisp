@@ -8,6 +8,7 @@
            :add-ecs-entity
            :clean-ecs-entities
            :process-all-entities
+           :find-a-entity
            :def-ecs-system
            :ecs-main)
   (:import-from :alexandria
@@ -42,8 +43,12 @@
     (dolist (entity *entity-list*)
       (rec entity))))
 
-(defun.ps is-registerd-entity (entity)
-  )
+(defun.ps+ find-a-entity (predicate)
+  (process-all-entities
+   (lambda (entity)
+     (if (funcall predicate entity)
+         (return-from find-a-entity entity))))
+  nil)
 
 #|
 (pse:with-use-ps-pack (:this))

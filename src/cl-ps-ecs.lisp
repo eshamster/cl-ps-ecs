@@ -4,6 +4,7 @@
            :ecs-entity
            :add-ecs-entity
            :process-all-entities
+           :find-a-entity
            :def-ecs-system
            :ecs-main))
 (in-package :cl-ps-ecs)
