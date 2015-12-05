@@ -68,7 +68,9 @@
                             (find-a-entity (lambda (ent)
                                              (and (sample-entity-p ent)
                                                   (= (sample-entity-a ent) 3))))))
-                         3)))))
+                         3)))
+    (prove-in-both (ok (not (find-a-entity
+                             (lambda (ent) (eq ent 3))))))))
 
 (defstruct.ps+ test1 a b)
 (defstruct.ps+ (test2 (:include test1)) c)
