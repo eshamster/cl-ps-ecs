@@ -17,6 +17,7 @@
   :author "eshamster"
   :license ""
   :depends-on (:parenscript
+               :alexandria
                :ps-experiment)
   :components ((:module "src"
                 :serial t

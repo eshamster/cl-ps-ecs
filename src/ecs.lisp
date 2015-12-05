@@ -3,7 +3,15 @@
   (:use :cl
         :parenscript
         :ps-experiment)
-  (:export :includes-all-component-types))
+  (:export :includes-all-component-types
+           :ecs-entity
+           :add-ecs-entity
+           :clean-ecs-entities
+           :process-all-entities
+           :def-ecs-system
+           :ecs-main)
+  (:import-from :alexandria
+                :symbolicate))
 (in-package :cl-ps-ecs.ecs)
 
 ;; ---- component ---- ;;
@@ -20,10 +28,39 @@
   parent
   (children '()))
 
-(defvar.ps *entity-tree-head* (make-ecs-entity))
+(defvar.ps+ *entity-list* '())
+
+;; [WIP]
+;; TODO: regester to system
+(defun.ps+ add-ecs-entity (entity &optional (parent nil))
+  (unless (ecs-entity-p entity)
+    (error 'type-error :expected-error 'ecs-entity :datum entity))
+  (if (null parent)
+      (push entity *entity-list*)
+      (progn (setf (ecs-entity-parent entity) parent)
+             (push entity (ecs-entity-children parent)))))
+
+;; [WIP]
+(defun.ps+ remove-ecs-entity (entity))
+
+(defun.ps+ clean-ecs-entities ()
+  (setf *entity-list* '()))
+
+(defun.ps+ process-all-entities (func)
+  (labels ((rec (entity)
+             (unless (null entity)
+               (funcall func entity)
+               (dolist (child (ecs-entity-children entity))
+                 (rec child)))))
+    (dolist (entity *entity-list*)
+      (rec entity))))
+
+#|
+(pse:with-use-ps-pack (:this))
+|#
 
 ;; ---- system ---- ;;
-(defvar.ps+ *ecs-system-list* nil)
+(defvar.ps+ *ecs-system-list* (make-hash-table))
 
 (defstruct.ps+ ecs-system
   (enable t)
@@ -36,9 +73,26 @@
     (when (ecs-system-enable system)
       (funcall (ecs-system-process system)))))
 
-;; ---- Cross cutting ---- ;;
+;; [WIP]
+(defmacro.ps def-ecs-system ((name &rest options) &rest slot-description)
+  (unless (some (lambda (opt) (eq (car opt) :include)) options)
+    (error "Error options: ~A must include ecs-system or its child" options))
+  (unless (symbolp name)
+    (error 'type-error :expected-type 'symbol :datum name))
+  `(progn (defstruct ,(list* name options) ,@slot-description)
+          (let ((obj ,(symbolicate 'make- name)))
+            (setf (gethash ,name *ecs-system-list*) obj)
+            ;; TODO: entity loop
+            )))
 
-;; component
+#|
+(def-ecs-system (a (:include b) (:test a)) c)
+(ps:ps (def-ecs-system (a (:include ecs-system) (:test a)) c))
+|#
+
+(ps:ps (def-ecs-system (a (:include ecs-system)) c d))
+
+;; ---- independent ---- ;;
 
 (defun.ps+ includes-all-component-types (target-component-types components)
   (every (lambda (type)
@@ -46,6 +100,8 @@
                    (typep comp type))
                  components))
          target-component-types))
+
+;; ---- Cross cutting ---- ;;
 
 ;; entity component system
 
