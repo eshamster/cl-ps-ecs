@@ -16,6 +16,7 @@
 ;; TOOD: push and restore the ps environment
 
 (defstruct.ps+ (sample-entity (:include ecs-entity)) a)
+(defstruct.ps+ not-entity a b)
 
 (defmacro with-add-entity (&body body)
   `(unwind-protect
@@ -24,6 +25,22 @@
 
 (subtest
     "Test entity funcs"
+  (subtest
+      "Test add-ecs-entity"
+    (with-add-entity
+      (prove-in-both (ok (let ((parent (make-sample-entity))
+                               (child (make-sample-entity)))
+                           (add-ecs-entity parent)
+                           (add-ecs-entity child parent)
+                           (eq (sample-entity-parent child) parent)))))
+    (with-add-entity
+      (prove-in-both (ok (let ((parent (make-sample-entity))
+                               (child (make-sample-entity)))
+                           (add-ecs-entity parent)
+                           (add-ecs-entity child parent)
+                           (eq (nth 0 (sample-entity-children parent)) child)))))
+    (prove-in-both (is-error (add-ecs-entity (make-not-entity))
+                             'type-error)))
   (subtest
       "Test process-all-entities"
     (with-add-entity

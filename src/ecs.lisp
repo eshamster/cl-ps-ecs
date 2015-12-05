@@ -30,19 +30,6 @@
 
 (defvar.ps+ *entity-list* '())
 
-;; [WIP]
-;; TODO: regester to system
-(defun.ps+ add-ecs-entity (entity &optional (parent nil))
-  (unless (ecs-entity-p entity)
-    (error 'type-error :expected-error 'ecs-entity :datum entity))
-  (if (null parent)
-      (push entity *entity-list*)
-      (progn (setf (ecs-entity-parent entity) parent)
-             (push entity (ecs-entity-children parent)))))
-
-;; [WIP]
-(defun.ps+ remove-ecs-entity (entity))
-
 (defun.ps+ clean-ecs-entities ()
   (setf *entity-list* '()))
 
@@ -73,6 +60,35 @@
     (when (ecs-system-enable system)
       (funcall (ecs-system-process system)))))
 
+(ps:ps (def-ecs-system (a (:include ecs-system)) c d))
+
+;; ---- independent ---- ;;
+
+(defun.ps+ includes-all-component-types (target-component-types components)
+  (every (lambda (type)
+           (some (lambda (comp)
+                   (typep comp type))
+                 components))
+         target-component-types))
+
+;; ---- Cross cutting ---- ;;
+
+;; entity system
+
+;; [WIP]
+;; TODO: regester to system
+(defun.ps+ add-ecs-entity (entity &optional (parent nil))
+  (unless (ecs-entity-p entity)
+    (error 'type-error :expected-type 'ecs-entity :datum entity))
+  (if (null parent)
+      (push entity *entity-list*)
+      (progn (setf (ecs-entity-parent entity) parent)
+             (push entity (ecs-entity-children parent)))))
+
+;; [WIP]
+(defun.ps+ remove-ecs-entity (entity))
+
+
 ;; [WIP]
 (defmacro.ps def-ecs-system ((name &rest options) &rest slot-description)
   (unless (some (lambda (opt) (eq (car opt) :include)) options)
@@ -89,19 +105,6 @@
 (def-ecs-system (a (:include b) (:test a)) c)
 (ps:ps (def-ecs-system (a (:include ecs-system) (:test a)) c))
 |#
-
-(ps:ps (def-ecs-system (a (:include ecs-system)) c d))
-
-;; ---- independent ---- ;;
-
-(defun.ps+ includes-all-component-types (target-component-types components)
-  (every (lambda (type)
-           (some (lambda (comp)
-                   (typep comp type))
-                 components))
-         target-component-types))
-
-;; ---- Cross cutting ---- ;;
 
 ;; entity component system
 
