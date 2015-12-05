@@ -42,6 +42,9 @@
     (dolist (entity *entity-list*)
       (rec entity))))
 
+(defun.ps is-registerd-entity (entity)
+  )
+
 #|
 (pse:with-use-ps-pack (:this))
 |#
@@ -83,7 +86,8 @@
   (if (null parent)
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
-             (push entity (ecs-entity-children parent)))))
+             (push entity (ecs-entity-children parent))))
+  entity)
 
 ;; [WIP]
 (defun.ps+ remove-ecs-entity (entity))
