@@ -6,34 +6,34 @@
         :ps-experiment
         :prove)
   (:import-from :cl-ps-ecs.ecs
-                :clean-ecs-entities)
+                :clean-ecs-env)
   (:import-from :ps-experiment-test.test-utils
                 :prove-in-both))
 (in-package :cl-ps-ecs-test.ecs)
 
-(plan 2)
+(plan 3)
 
 ;; TOOD: push and restore the ps environment
 
 (defstruct.ps+ (sample-entity (:include ecs-entity)) a)
 (defstruct.ps+ not-entity a b)
 
-(defmacro with-add-entity (&body body)
+(defmacro with-modify-env (&body body)
   `(unwind-protect
         (progn ,@body)
-     (clean-ecs-entities)))
+     (clean-ecs-env)))
 
 (subtest
     "Test entity funcs"
   (subtest
       "Test add-ecs-entity"
-    (with-add-entity
+    (with-modify-env
       (prove-in-both (ok (let ((parent (make-sample-entity))
                                (child (make-sample-entity)))
                            (add-ecs-entity parent)
                            (add-ecs-entity child parent)
                            (eq (sample-entity-parent child) parent)))))
-    (with-add-entity
+    (with-modify-env
       (prove-in-both (ok (let ((parent (make-sample-entity))
                                (child (make-sample-entity)))
                            (add-ecs-entity parent)
@@ -45,7 +45,7 @@
                                'type-error))))
   (subtest
       "Test process-all-entities"
-    (with-add-entity
+    (with-modify-env
         (prove-in-both (is (let ((entity (make-sample-entity :a 1))
                                  (sum 0))
                              (add-ecs-entity entity)
@@ -58,7 +58,7 @@
                            10))))
   (subtest
       "Test find-a-entity"
-    (with-add-entity
+    (with-modify-env
       (prove-in-both (is (let ((entity (make-sample-entity :a 1)))
                            (add-ecs-entity entity)
                            (add-ecs-entity (make-sample-entity :a 2))

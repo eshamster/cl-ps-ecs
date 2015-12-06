@@ -4,13 +4,16 @@
         :parenscript
         :ps-experiment)
   (:export :includes-all-component-types
+           :ecs-component
            :ecs-entity
            :add-ecs-entity
-           :clean-ecs-entities
            :process-all-entities
            :find-a-entity
-           :def-ecs-system
-           :ecs-main)
+           :add-ecs-component
+           :remove-ecs-component
+           :register-ecs-system
+           :ecs-main
+           :clean-ecs-env)
   (:import-from :alexandria
                 :symbolicate))
 (in-package :cl-ps-ecs.ecs)
@@ -55,7 +58,10 @@
 |#
 
 ;; ---- system ---- ;;
-(defvar.ps+ *ecs-system-list* (make-hash-table))
+(defvar.ps+ *ecs-system-hash* (make-hash-table))
+
+(defun.ps+ clean-ecs-systems ()
+  (setf *ecs-system-hash* (make-hash-table)))
 
 (defstruct.ps+ ecs-system
   (enable t)
@@ -64,7 +70,7 @@
   (process (lambda ())))
 
 (defun.ps+ ecs-main ()
-  (dolist (system *ecs-system-list*)
+  (dolist (system *ecs-system-hash*)
     (when (ecs-system-enable system)
       (funcall (ecs-system-process system)))))
 
@@ -82,6 +88,12 @@
 ;; ---- Cross cutting ---- ;;
 
 ;; entity system
+
+;; entity component system
+
+(defun.ps+ clean-ecs-env ()
+  (clean-ecs-entities)
+  (clean-ecs-systems))
 
 ;; [WIP]
 ;; TODO: regester to system
