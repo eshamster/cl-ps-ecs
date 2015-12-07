@@ -82,23 +82,6 @@
                                     (target-component-types '(cmp-parent cmp-independent))
                                     (process (lambda (entity) (incf *test-counter*))))))
 
-(cl-js:run-js
- (with-use-ps-pack (:this)
-   (let ((ent1 (make-sample-entity))
-         (ent2 (make-sample-entity))
-         (ent3 (make-sample-entity)))
-     (add-ecs-component (make-cmp-child) ent1)
-     (add-ecs-component (make-cmp-independent) ent1)
-     (add-ecs-component (make-cmp-parent) ent2)
-     (add-ecs-component (make-cmp-independent) ent2)
-     (add-ecs-component (make-cmp-parent) ent3)
-     (add-ecs-entity ent1)
-     (add-ecs-entity ent2)
-     (add-ecs-entity ent3)
-     (register-ecs-system 'test (make-sys-test1))
-     (ecs-main)
-     *test-counter*)))
-
 (subtest
     "Test system funcs"
   (subtest
