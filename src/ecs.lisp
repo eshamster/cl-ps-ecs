@@ -20,7 +20,8 @@
            :ecs-main
            :clean-ecs-env)
   (:import-from :alexandria
-                :symbolicate))
+                :symbolicate
+                :with-gensyms))
 (in-package :cl-ps-ecs.ecs)
 
 ;; ---- component ---- ;;
@@ -70,14 +71,22 @@
   (target-component-types '())
   (process (lambda (entity) entity)))
 
-(defun.ps+ ecs-main ()
-  (maphash (lambda (name system)
-                   (when (ecs-system-enable system)
-                     (dolist (entity (ecs-system-target-entities system))
-                       (funcall (ecs-system-process system) entity))))
-           *ecs-system-hash*))
+(eval-when (:compile-toplevel :execute :load-toplevel)
+  (defmacro.ps+ do-ecs-systems (var &body body)
+    (if (atom var)
+        (with-gensyms (name)
+          `(maphash (lambda (,name ,var)
+                      ,@body)
+                    *ecs-system-hash*))
+        `(maphash (lambda (,(car var) ,(cadr var))
+                    ,@body)
+                  *ecs-system-hash*))))
 
-(ps:ps (def-ecs-system (a (:include ecs-system)) c d))
+(defun.ps+ ecs-main ()
+  (do-ecs-systems system
+    (when (ecs-system-enable system)
+      (dolist (entity (ecs-system-target-entities system))
+        (funcall (ecs-system-process system) entity)))))
 
 ;; ---- independent ---- ;;
 
