@@ -72,6 +72,61 @@
     (prove-in-both (ok (not (find-a-entity
                              (lambda (ent) (eq ent 3))))))))
 
+(defstruct.ps+ (cmp-parent (:include ecs-component)))
+(defstruct.ps+ (cmp-child (:include cmp-parent)))
+(defstruct.ps+ (cmp-independent (:include ecs-component)))
+
+(defvar.ps+ *test-counter* 0)
+
+(defstruct.ps+ (sys-test1 (:include ecs-system
+                                    (target-component-types '(cmp-parent cmp-independent))
+                                    (process (lambda (entity) (incf *test-counter*))))))
+
+(cl-js:run-js
+ (with-use-ps-pack (:this)
+   (let ((ent1 (make-sample-entity))
+         (ent2 (make-sample-entity))
+         (ent3 (make-sample-entity)))
+     (add-ecs-component (make-cmp-child) ent1)
+     (add-ecs-component (make-cmp-independent) ent1)
+     (add-ecs-component (make-cmp-parent) ent2)
+     (add-ecs-component (make-cmp-independent) ent2)
+     (add-ecs-component (make-cmp-parent) ent3)
+     (add-ecs-entity ent1)
+     (add-ecs-entity ent2)
+     (add-ecs-entity ent3)
+     (register-ecs-system 'test (make-sys-test1))
+     (ecs-main)
+     *test-counter*)))
+
+(subtest
+    "Test system funcs"
+  (subtest
+      "Test register-ecs-system"
+    (with-modify-env
+      (prove-in-both (is (let ((ent1 (make-sample-entity))
+                               (ent2 (make-sample-entity))
+                               (ent3 (make-sample-entity)))
+                           (add-ecs-component (make-cmp-child) ent1)
+                           (add-ecs-component (make-cmp-independent) ent1)
+                           (add-ecs-component (make-cmp-parent) ent2)
+                           (add-ecs-component (make-cmp-independent) ent2)
+                           (add-ecs-component (make-cmp-parent) ent3)
+                           (add-ecs-entity ent1)
+                           (add-ecs-entity ent2)
+                           (add-ecs-entity ent3)
+                           (register-ecs-system 'test (make-sys-test1))
+                           (ecs-main)
+                           *test-counter*)
+                         2)))
+    (setf *test-counter* 0)
+    (prove-in-both (is-error (register-ecs-system (make-cmp-parent)
+                                                  (make-sample-entity))
+                             'type-error))
+    (prove-in-both (is-error (register-ecs-system (make-sys-test1)
+                                                  (make-cmp-parent))
+                             'type-error))))
+
 (defstruct.ps+ test1 a b)
 (defstruct.ps+ (test2 (:include test1)) c)
 (defstruct.ps+ test3 a b)

@@ -11,6 +11,11 @@
            :find-a-entity
            :add-ecs-component
            :remove-ecs-component
+           
+           :ecs-system
+           :target-component-types
+           :process
+           
            :register-ecs-system
            :ecs-main
            :clean-ecs-env)
@@ -28,7 +33,7 @@
 
 (defstruct.ps+ ecs-entity
   (id (incf *entity-id-counter*))
-  (components nil)
+  (components '())
   parent
   (children '()))
 
@@ -53,10 +58,6 @@
          (return-from find-a-entity entity))))
   nil)
 
-#|
-(pse:with-use-ps-pack (:this))
-|#
-
 ;; ---- system ---- ;;
 (defvar.ps+ *ecs-system-hash* (make-hash-table))
 
@@ -65,14 +66,16 @@
 
 (defstruct.ps+ ecs-system
   (enable t)
-  (target-entities '())
+  (target-entities '()) ;; automatically updated
   (target-component-types '())
-  (process (lambda ())))
+  (process (lambda (entity) entity)))
 
 (defun.ps+ ecs-main ()
-  (dolist (system *ecs-system-hash*)
-    (when (ecs-system-enable system)
-      (funcall (ecs-system-process system)))))
+  (maphash (lambda (name system)
+                   (when (ecs-system-enable system)
+                     (dolist (entity (ecs-system-target-entities system))
+                       (funcall (ecs-system-process system) entity))))
+           *ecs-system-hash*))
 
 (ps:ps (def-ecs-system (a (:include ecs-system)) c d))
 
@@ -88,6 +91,10 @@
 ;; ---- Cross cutting ---- ;;
 
 ;; entity system
+
+(defun.ps+ is-target-entity (entity system)
+  (includes-all-component-types (ecs-system-target-component-types system)
+                                (ecs-entity-components entity)))
 
 ;; entity component system
 
@@ -109,28 +116,27 @@
 ;; [WIP]
 (defun.ps+ remove-ecs-entity (entity))
 
+(defun.ps+ register-ecs-system (name system)
+  (unless (ecs-system-p system)
+    (error 'type-error :expected-type 'ecs-system :datum system))
+  (setf (gethash name *ecs-system-hash*) system)
+  (setf (ecs-system-target-entities system) '())
+  (process-all-entities
+   (lambda (entity)
+     (when (is-target-entity entity system)
+       (push entity (ecs-system-target-entities system)))))
+  system)
 
 ;; [WIP]
-(defmacro.ps def-ecs-system ((name &rest options) &rest slot-description)
-  (unless (some (lambda (opt) (eq (car opt) :include)) options)
-    (error "Error options: ~A must include ecs-system or its child" options))
-  (unless (symbolp name)
-    (error 'type-error :expected-type 'symbol :datum name))
-  `(progn (defstruct ,(list* name options) ,@slot-description)
-          (let ((obj ,(symbolicate 'make- name)))
-            (setf (gethash ,name *ecs-system-list*) obj)
-            ;; TODO: entity loop
-            )))
-
-#|
-(def-ecs-system (a (:include b) (:test a)) c)
-(ps:ps (def-ecs-system (a (:include ecs-system) (:test a)) c))
-|#
-
-;; entity component system
-
-(defun.ps+ add-ecs-component (entity component)
+(defun.ps+ add-ecs-component (component entity)
+  (unless (ecs-component-p component)
+    (error 'type-error :expected-type 'ecs-component :datum component))
+  (unless (ecs-entity-p entity)
+    (error 'type-error :expected-type 'ecs-entity :datum entity))
+  (push component (ecs-entity-components entity))
+  ;; TODO: regester to system only if the entity is registered to global
   )
 
-(defun.ps+ remove-ecs-component (entity component))
+;; [WIP]
+(defun.ps+ remove-ecs-component (component entity))
 
