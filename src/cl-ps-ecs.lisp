@@ -4,7 +4,7 @@
            :ecs-component
            :ecs-entity
            :add-ecs-entity
-           :process-all-entities
+           :do-ecs-entities
            :find-a-entity
            :add-ecs-component
            :remove-ecs-component

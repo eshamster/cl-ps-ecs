@@ -54,12 +54,12 @@
       (prove-in-both (is-error (add-ecs-entity (make-not-entity))
                                'type-error))))
   (subtest
-      "Test process-all-entities"
+      "Test do-ecs-entities"
     (with-modify-env
       (prove-in-both (is (let ((sum 0))
                            (add-sample-entities-for-loop)
-                           (process-all-entities (lambda (ent)
-                                                   (incf sum (sample-entity-a ent))))
+                           (do-ecs-entities ent
+                             (incf sum (sample-entity-a ent)))
                              sum)
                          10))))
   (subtest

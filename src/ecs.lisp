@@ -7,7 +7,7 @@
            :ecs-component
            :ecs-entity
            :add-ecs-entity
-           :process-all-entities
+           :do-ecs-entities
            :find-a-entity
            :add-ecs-component
            :remove-ecs-component
@@ -43,20 +43,20 @@
 (defun.ps+ clean-ecs-entities ()
   (setf *entity-list* '()))
 
-(defun.ps+ process-all-entities (func)
-  (labels ((rec (entity)
-             (unless (null entity)
-               (funcall func entity)
-               (dolist (child (ecs-entity-children entity))
-                 (rec child)))))
-    (dolist (entity *entity-list*)
-      (rec entity))))
+(defmacro.ps+ do-ecs-entities (var &body body)
+  (with-gensyms (rec)
+    `(labels ((,rec (,var)
+                (unless (null ,var)
+                  ,@body
+                  (dolist (child (ecs-entity-children ,var))
+                    (,rec child)))))
+       (dolist (entity *entity-list*)
+         (,rec entity)))))
 
 (defun.ps+ find-a-entity (predicate)
-  (process-all-entities
-   (lambda (entity)
-     (if (funcall predicate entity)
-         (return-from find-a-entity entity))))
+  (do-ecs-entities entity
+    (if (funcall predicate entity)
+        (return-from find-a-entity entity)))
   nil)
 
 ;; ---- system ---- ;;
@@ -129,10 +129,9 @@
     (error 'type-error :expected-type 'ecs-system :datum system))
   (setf (gethash name *ecs-system-hash*) system)
   (setf (ecs-system-target-entities system) '())
-  (process-all-entities
-   (lambda (entity)
-     (when (is-target-entity entity system)
-       (push entity (ecs-system-target-entities system)))))
+  (do-ecs-entities entity
+    (when (is-target-entity entity system)
+      (push entity (ecs-system-target-entities system))))
   system)
 
 ;; [WIP]
