@@ -23,22 +23,32 @@
         (progn ,@body)
      (clean-ecs-env)))
 
+(defun.ps+ add-sample-entities-for-inherit (func)
+  (let ((parent (make-sample-entity))
+        (child (make-sample-entity)))
+    (add-ecs-entity parent)
+    (add-ecs-entity child parent)
+    (funcall func parent child)))
+
+(defun.ps+ add-sample-entities-for-loop ()
+  (let ((entity (make-sample-entity :a 1)))
+    (add-ecs-entity entity)
+    (add-ecs-entity (make-sample-entity :a 2))
+    (add-ecs-entity (make-sample-entity :a 3) entity)
+    (add-ecs-entity (make-sample-entity :a 4) entity)))
+
 (subtest
     "Test entity funcs"
   (subtest
       "Test add-ecs-entity"
     (with-modify-env
-      (prove-in-both (ok (let ((parent (make-sample-entity))
-                               (child (make-sample-entity)))
-                           (add-ecs-entity parent)
-                           (add-ecs-entity child parent)
-                           (eq (sample-entity-parent child) parent)))))
+      (prove-in-both (ok (add-sample-entities-for-inherit
+                          (lambda (parent child)
+                            (eq (sample-entity-parent child) parent))))))
     (with-modify-env
-      (prove-in-both (ok (let ((parent (make-sample-entity))
-                               (child (make-sample-entity)))
-                           (add-ecs-entity parent)
-                           (add-ecs-entity child parent)
-                           (eq (nth 0 (sample-entity-children parent)) child)))))
+      (prove-in-both (ok (add-sample-entities-for-inherit
+                          (lambda (parent child)
+                            (eq (nth 0 (sample-entity-children parent)) child))))))
     (locally
         (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
       (prove-in-both (is-error (add-ecs-entity (make-not-entity))
@@ -46,28 +56,20 @@
   (subtest
       "Test process-all-entities"
     (with-modify-env
-        (prove-in-both (is (let ((entity (make-sample-entity :a 1))
-                                 (sum 0))
-                             (add-ecs-entity entity)
-                             (add-ecs-entity (make-sample-entity :a 2))
-                             (add-ecs-entity (make-sample-entity :a 3) entity)
-                             (add-ecs-entity (make-sample-entity :a 4) entity)
-                             (process-all-entities (lambda (ent)
-                                                     (incf sum (sample-entity-a ent))))
+      (prove-in-both (is (let ((sum 0))
+                           (add-sample-entities-for-loop)
+                           (process-all-entities (lambda (ent)
+                                                   (incf sum (sample-entity-a ent))))
                              sum)
-                           10))))
+                         10))))
   (subtest
       "Test find-a-entity"
     (with-modify-env
-      (prove-in-both (is (let ((entity (make-sample-entity :a 1)))
-                           (add-ecs-entity entity)
-                           (add-ecs-entity (make-sample-entity :a 2))
-                           (add-ecs-entity (make-sample-entity :a 3) entity)
-                           (add-ecs-entity (make-sample-entity :a 4) entity)
-                           (sample-entity-a
-                            (find-a-entity (lambda (ent)
-                                             (and (sample-entity-p ent)
-                                                  (= (sample-entity-a ent) 3))))))
+      (prove-in-both (is (progn (add-sample-entities-for-loop)
+                                (sample-entity-a
+                                 (find-a-entity (lambda (ent)
+                                                  (and (sample-entity-p ent)
+                                                       (= (sample-entity-a ent) 3))))))
                          3)))
     (prove-in-both (ok (not (find-a-entity
                              (lambda (ent) (eq ent 3))))))))
