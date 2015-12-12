@@ -5,6 +5,7 @@
            
            :ecs-entity
            :add-ecs-entity
+           :delete-ecs-entity
            :do-ecs-entities
            :find-a-entity
            :find-the-entity

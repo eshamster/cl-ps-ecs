@@ -96,6 +96,40 @@
       (prove-in-both (is-error (add-ecs-entity (make-not-entity))
                                'type-error))))
   (subtest
+      "Test delete-ecs-entities"
+    (with-modify-env
+      (is-list.ps+ (add-sample-entities-for-inherit
+                    (lambda (parent child)
+                      (let ((grandchild (make-sample-entity)))
+                        (add-ecs-entity grandchild child)
+                        (delete-ecs-entity child)
+                        (list (null (sample-entity-parent child))
+                              (null (nth 0 (sample-entity-children parent)))
+                              (not (null (find-the-entity parent)))
+                              (find-the-entity child)
+                              (find-the-entity grandchild)))))
+                   (list t t t nil nil)))
+    (with-modify-env
+      (is-list.ps+ (add-sample-entities-for-inherit
+                    (lambda (parent child)
+                      (delete-ecs-entity parent)
+                      (list (eq (sample-entity-parent child) parent)
+                            (eq (nth 0 (sample-entity-children parent)) child)
+                            (find-the-entity parent)
+                            (find-the-entity child))))
+                   (list t t nil nil)))
+    (locally
+        (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
+      (with-modify-env
+        (prove-in-both (is-error (add-sample-entities-for-inherit
+                                  (lambda (parent child)
+                                    (declare (ignore parent child))
+                                    (let ((not-registered (make-sample-entity)))
+                                      (delete-ecs-entity not-registered))))
+                                 'simple-error)))
+      (prove-in-both (is-error (delete-ecs-entity (make-not-entity))
+                               'type-error))))
+  (subtest
       "Test do-ecs-entities"
     (with-modify-env
       (prove-in-both (is (let ((sum 0))
