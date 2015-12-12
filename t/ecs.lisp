@@ -65,7 +65,7 @@
       (is-list.ps+ (add-sample-entities-for-inherit
                     (lambda (parent child)
                       (list (eq (sample-entity-parent child) parent)
-                            (eq (nth 1 (sample-entity-children parent)) child))))
+                            (eq (nth 0 (sample-entity-children parent)) child))))
                    (list t t)))
     (with-modify-env
       (prove-in-both (is (let ((ent1 (make-sample-entity))
