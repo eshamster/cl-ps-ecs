@@ -8,7 +8,8 @@
   (:import-from :cl-ps-ecs.ecs
                 :clean-ecs-env)
   (:import-from :ps-experiment-test.test-utils
-                :prove-in-both))
+                :prove-in-both
+                :is-list.ps+))
 (in-package :cl-ps-ecs-test.ecs)
 
 (plan 3)
@@ -61,13 +62,11 @@
   (subtest
       "Test add-ecs-entity"
     (with-modify-env
-      (prove-in-both (ok (add-sample-entities-for-inherit
-                          (lambda (parent child)
-                            (eq (sample-entity-parent child) parent))))))
-    (with-modify-env
-      (prove-in-both (ok (add-sample-entities-for-inherit
-                          (lambda (parent child)
-                            (eq (nth 0 (sample-entity-children parent)) child))))))
+      (is-list.ps+ (add-sample-entities-for-inherit
+                    (lambda (parent child)
+                      (list (eq (sample-entity-parent child) parent)
+                            (eq (nth 1 (sample-entity-children parent)) child))))
+                   (list t t)))
     (with-modify-env
       (prove-in-both (is (let ((ent1 (make-sample-entity))
                                (ent2 (make-sample-entity))
