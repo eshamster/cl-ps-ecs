@@ -133,7 +133,6 @@
       (push entity (ecs-system-target-entities system))))
   entity)
 
-;; [WIP]
 (defun.ps+ delete-ecs-entity (entity)
   "Remove an entity from global *entity-list* with its descendants."
   (unless (ecs-entity-p entity)
@@ -143,12 +142,10 @@
   (let ((parent (ecs-entity-parent entity)))
     (if parent
         (progn (setf (ecs-entity-children parent)
-                     (remove-if (lambda (child) (eq child entity))
-                                (ecs-entity-children parent)))
+                     (remove entity (ecs-entity-children parent)))
                (setf (ecs-entity-parent entity) nil))
         (setf *entity-list*
-              (remove-if (lambda (target) (eq target entity))
-                         *entity-list*)))))
+              (remove entity *entity-list*)))))
 
 ;; [WIP]
 (defun.ps+ move-ecs-entity (entity new-parent)
