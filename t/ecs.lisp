@@ -15,15 +15,6 @@
 
 ;; TOOD: push and restore the ps environment
 
-(print (with-use-ps-pack (:this)
-         (do-ecs-entities ent abc)
-         (ecs-system-enable system)))
-
-(dolist (env parenscript::*macro-env*)
-  (maphash (lambda (k v)
-             (format t "~A::~A~%" (package-name (symbol-package k)) (symbol-name k))
-             (print v)) env))
-
 (defstruct.ps+ (sample-entity (:include ecs-entity)) a)
 (defstruct.ps+ not-entity a b)
 
