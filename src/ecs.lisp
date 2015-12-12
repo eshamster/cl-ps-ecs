@@ -5,10 +5,12 @@
         :ps-experiment)
   (:export :includes-all-component-types
            :ecs-component
+           
            :ecs-entity
            :add-ecs-entity
            :do-ecs-entities
            :find-a-entity
+           :find-the-entity
            :add-ecs-component
            :remove-ecs-component
            
@@ -54,10 +56,16 @@
          (,rec entity)))))
 
 (defun.ps+ find-a-entity (predicate)
+  "Find a registered entity by predicate"
   (do-ecs-entities entity
     (if (funcall predicate entity)
         (return-from find-a-entity entity)))
   nil)
+
+(defun.ps+ find-the-entity (entity)
+  "Find a registered entity by comparing the address"
+  (find-a-entity
+   (lambda (target) (eq entity target))))
 
 ;; ---- system ---- ;;
 (defvar.ps+ *ecs-system-hash* (make-hash-table))
@@ -111,18 +119,28 @@
   (clean-ecs-systems))
 
 ;; [WIP]
-;; TODO: regester to system
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   (unless (ecs-entity-p entity)
     (error 'type-error :expected-type 'ecs-entity :datum entity))
+  ;; TODO: error if already registered (then re-register)
   (if (null parent)
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
              (push entity (ecs-entity-children parent))))
+  (do-ecs-systems system
+    ;; TODO: test regester to system
+    (when (is-target-entity entity system)
+      (push entity (ecs-system-target-entities system))))
   entity)
 
 ;; [WIP]
-(defun.ps+ remove-ecs-entity (entity))
+(defun.ps+ remove-ecs-entity (entity)
+  )
+
+;; [WIP]
+(defun.ps+ move-ecs-entity (entity new-parent)
+  ;; TDOO: error if has not registered
+  ())
 
 (defun.ps+ register-ecs-system (name system)
   (unless (ecs-system-p system)

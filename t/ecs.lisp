@@ -15,6 +15,15 @@
 
 ;; TOOD: push and restore the ps environment
 
+(print (with-use-ps-pack (:this)
+         (do-ecs-entities ent abc)
+         (ecs-system-enable system)))
+
+(dolist (env parenscript::*macro-env*)
+  (maphash (lambda (k v)
+             (format t "~A::~A~%" (package-name (symbol-package k)) (symbol-name k))
+             (print v)) env))
+
 (defstruct.ps+ (sample-entity (:include ecs-entity)) a)
 (defstruct.ps+ not-entity a b)
 
@@ -71,8 +80,23 @@
                                                   (and (sample-entity-p ent)
                                                        (= (sample-entity-a ent) 3))))))
                          3)))
-    (prove-in-both (ok (not (find-a-entity
-                             (lambda (ent) (eq ent 3))))))))
+    (with-modify-env
+      (prove-in-both (ok (not (progn (add-sample-entities-for-loop)
+                                     (find-a-entity
+                                      (lambda (ent) (eq ent 5)))))))))
+  (subtest
+      "Test find-the-entity"
+    (with-modify-env
+      (prove-in-both (is (progn (add-sample-entities-for-loop)
+                                (let ((target
+                                       (find-a-entity (lambda (ent)
+                                                        (and (sample-entity-p ent)
+                                                             (= (sample-entity-a ent) 3))))))
+                                  (sample-entity-a (find-the-entity target))))
+                         3)))
+    (with-modify-env
+      (prove-in-both (ok (not (progn (add-sample-entities-for-loop)
+                                     (find-the-entity (make-sample-entity)))))))))
 
 (defstruct.ps+ (cmp-parent (:include ecs-component)))
 (defstruct.ps+ (cmp-child (:include cmp-parent)))

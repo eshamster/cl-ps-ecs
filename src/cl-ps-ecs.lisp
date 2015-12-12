@@ -2,10 +2,12 @@
   (:use :cl-ps-ecs.ecs)
   (:export :includes-all-component-types
            :ecs-component
+           
            :ecs-entity
            :add-ecs-entity
            :do-ecs-entities
            :find-a-entity
+           :find-the-entity
            :add-ecs-component
            :remove-ecs-component
            
