@@ -118,17 +118,16 @@
   (clean-ecs-entities)
   (clean-ecs-systems))
 
-;; [WIP]
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   (unless (ecs-entity-p entity)
     (error 'type-error :expected-type 'ecs-entity :datum entity))
-  ;; TODO: error if already registered (then re-register)
+  (when (find-the-entity entity)
+    (error "The entity is already registered."))
   (if (null parent)
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
              (push entity (ecs-entity-children parent))))
   (do-ecs-systems system
-    ;; TODO: test regester to system
     (when (is-target-entity entity system)
       (push entity (ecs-system-target-entities system))))
   entity)

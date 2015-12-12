@@ -15,13 +15,30 @@
 
 ;; TOOD: push and restore the ps environment
 
+;; ---- Definitions for test ---- ;;
+
+;; - values and structs - ;;
+
+(defstruct.ps+ (cmp-parent (:include ecs-component)))
+(defstruct.ps+ (cmp-child (:include cmp-parent)))
+(defstruct.ps+ (cmp-independent (:include ecs-component)))
+
+(defvar.ps+ *test-counter* 0)
+
+(defstruct.ps+ (sys-test1 (:include ecs-system
+                                    (target-component-types '(cmp-parent cmp-independent))
+                                    (process (lambda (entity) (incf *test-counter*))))))
+
 (defstruct.ps+ (sample-entity (:include ecs-entity)) a)
 (defstruct.ps+ not-entity a b)
+
+;; - funcs and macros - ;;
 
 (defmacro with-modify-env (&body body)
   `(unwind-protect
         (progn ,@body)
-     (clean-ecs-env)))
+     (progn (clean-ecs-env)
+            (setf *test-counter* 0))))
 
 (defun.ps+ add-sample-entities-for-inherit (func)
   (let ((parent (make-sample-entity))
@@ -37,6 +54,8 @@
     (add-ecs-entity (make-sample-entity :a 3) entity)
     (add-ecs-entity (make-sample-entity :a 4) entity)))
 
+;; ---- Start test ---- ;;
+
 (subtest
     "Test entity funcs"
   (subtest
@@ -49,8 +68,32 @@
       (prove-in-both (ok (add-sample-entities-for-inherit
                           (lambda (parent child)
                             (eq (nth 0 (sample-entity-children parent)) child))))))
+    (with-modify-env
+      (prove-in-both (is (let ((ent1 (make-sample-entity))
+                               (ent2 (make-sample-entity))
+                               (ent3 (make-sample-entity)))
+                           (register-ecs-system "sys1" (make-sys-test1))
+                           ;; registered to sys1
+                           (add-ecs-component (make-cmp-parent) ent1)
+                           (add-ecs-component (make-cmp-independent) ent1)
+                           (add-ecs-entity ent1)
+                           ;; not registered to sys1
+                           (add-ecs-component (make-cmp-parent) ent2)
+                           (add-ecs-component (make-cmp-independent) ent2)
+                           ;; not registered to sys1
+                           (add-ecs-component (make-cmp-parent) ent3)
+                           (add-ecs-entity ent3)
+                           ;; execute
+                           (ecs-main)
+                           *test-counter*)
+                         1)))
     (locally
         (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
+      (with-modify-env
+        (prove-in-both (is-error (add-sample-entities-for-inherit
+                                  (lambda (parent child)
+                                    (add-ecs-entity child)))
+                                 'simple-error)))
       (prove-in-both (is-error (add-ecs-entity (make-not-entity))
                                'type-error))))
   (subtest
@@ -89,16 +132,6 @@
       (prove-in-both (ok (not (progn (add-sample-entities-for-loop)
                                      (find-the-entity (make-sample-entity)))))))))
 
-(defstruct.ps+ (cmp-parent (:include ecs-component)))
-(defstruct.ps+ (cmp-child (:include cmp-parent)))
-(defstruct.ps+ (cmp-independent (:include ecs-component)))
-
-(defvar.ps+ *test-counter* 0)
-
-(defstruct.ps+ (sys-test1 (:include ecs-system
-                                    (target-component-types '(cmp-parent cmp-independent))
-                                    (process (lambda (entity) (incf *test-counter*))))))
-
 (subtest
     "Test system funcs"
   (subtest
@@ -119,7 +152,6 @@
                            (ecs-main)
                            *test-counter*)
                          2)))
-    (setf *test-counter* 0)
     (prove-in-both (is-error (register-ecs-system (make-cmp-parent)
                                                   (make-sample-entity))
                              'type-error))
