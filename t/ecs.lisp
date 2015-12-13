@@ -135,6 +135,7 @@
                                'type-error))))
   (subtest
       "Test delete-ecs-entities"
+    ;; test if descendants are deleted
     (with-modify-env
       (is-list.ps+ (add-sample-entities-for-inherit
                     (lambda (parent child)
@@ -147,6 +148,7 @@
                               (find-the-entity child)
                               (find-the-entity grandchild)))))
                    (list t t t nil nil)))
+    ;; test deleteing toplevel entity
     (with-modify-env
       (is-list.ps+ (add-sample-entities-for-inherit
                     (lambda (parent child)
@@ -156,6 +158,29 @@
                             (find-the-entity parent)
                             (find-the-entity child))))
                    (list t t nil nil)))
+    ;; test if the entity and its descendants are deleted from system
+    (with-modify-env
+      (prove-in-both (is (add-sample-entities-for-inherit
+                          (lambda (parent child)
+                            (let ((grandchild (make-sample-entity)))
+                              (labels ((add-target-components (entity) 
+                                         (add-ecs-component (make-cmp-parent) entity)
+                                         (add-ecs-component (make-cmp-independent) entity)))
+                                ;; prepare
+                                (add-ecs-entity grandchild child)
+                                (register-ecs-system "sys1" (make-sys-test1))
+                                (add-target-components parent)
+                                (add-target-components child)
+                                (add-target-components grandchild)
+                                ;; execute (*test-counter* should become 3)
+                                (ecs-main)
+                                ;; delete and execute
+                                (delete-ecs-entity child)
+                                (ecs-main)
+                                *test-counter*))))
+                         4)
+                     :prints-js t))
+    ;; test error
     (locally
         (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
       (with-modify-env

@@ -153,7 +153,11 @@
                      (remove entity (ecs-entity-children parent)))
                (setf (ecs-entity-parent entity) nil))
         (setf *entity-list*
-              (remove entity *entity-list*)))))
+              (remove entity *entity-list*))))
+  (do-ecs-entity-tree (target entity)
+    (do-ecs-systems system
+      (setf (ecs-system-target-entities system)
+            (remove target (ecs-system-target-entities system))))))
 
 ;; [WIP]
 (defun.ps+ move-ecs-entity (entity new-parent)
@@ -179,9 +183,10 @@
   (when (find component (ecs-entity-components entity))
     (error "The component is already added to the entity."))
   (push component (ecs-entity-components entity))
+  ;; TODO: push its descendants
   (when (find-the-entity entity)
     (push-entity-to-all-target-system entity)))
 
 ;; [WIP]
-(defun.ps+ remove-ecs-component (component entity))
+(defun.ps+ delete-ecs-component (component entity))
 
