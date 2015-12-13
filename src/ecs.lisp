@@ -130,14 +130,20 @@
       (push entity (ecs-system-target-entities system)))))
 
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
+  "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
   (unless (ecs-entity-p entity)
     (error 'type-error :expected-type 'ecs-entity :datum entity))
   (when (find-the-entity entity)
     (error "The entity is already registered."))
+  (unless (or (null parent) (ecs-entity-p parent))
+    (error 'type-error :expected-type 'ecs-entity :datum parent))
+  (unless (or (null parent) (find-the-entity parent))
+    (error "The paret is not registered"))
   (if (null parent)
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
              (push entity (ecs-entity-children parent))))
+  ;; TODO: push its descendants
   (push-entity-to-all-target-system entity)
   entity)
 
@@ -183,7 +189,6 @@
   (when (find component (ecs-entity-components entity))
     (error "The component is already added to the entity."))
   (push component (ecs-entity-components entity))
-  ;; TODO: push its descendants
   (when (find-the-entity entity)
     (push-entity-to-all-target-system entity)))
 

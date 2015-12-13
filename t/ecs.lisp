@@ -132,7 +132,11 @@
                                     (add-ecs-entity child)))
                                  'simple-error)))
       (prove-in-both (is-error (add-ecs-entity (make-not-entity))
-                               'type-error))))
+                               'type-error))
+      (prove-in-both (is-error (add-ecs-entity (make-sample-entity) (make-not-entity))
+                               'type-error))
+      (prove-in-both (is-error (add-ecs-entity (make-sample-entity) (make-sample-entity))
+                               'simple-error))))
   (subtest
       "Test delete-ecs-entities"
     ;; test if descendants are deleted
@@ -178,8 +182,7 @@
                                 (delete-ecs-entity child)
                                 (ecs-main)
                                 *test-counter*))))
-                         4)
-                     :prints-js t))
+                         4)))
     ;; test error
     (locally
         (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
