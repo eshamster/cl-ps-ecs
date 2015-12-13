@@ -46,15 +46,19 @@
 (defun.ps+ clean-ecs-entities ()
   (setf *entity-list* '()))
 
-(defmacro.ps+ do-ecs-entities (var &body body)
+(defmacro.ps+ do-ecs-entity-tree ((var top-entity) &body body)
   (with-gensyms (rec)
     `(labels ((,rec (,var)
                 (unless (null ,var)
                   ,@body
                   (dolist (child (ecs-entity-children ,var))
                     (,rec child)))))
-       (dolist (entity *entity-list*)
-         (,rec entity)))))
+       (,rec ,top-entity))))
+
+(defmacro.ps+ do-ecs-entities (var &body body)
+  `(dolist (entity *entity-list*)
+     (do-ecs-entity-tree (,var entity)
+       ,@body)))
 
 (defun.ps+ find-a-entity (predicate)
   "Find a registered entity by predicate"
