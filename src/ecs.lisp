@@ -143,8 +143,8 @@
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
              (push entity (ecs-entity-children parent))))
-  ;; TODO: push its descendants
-  (push-entity-to-all-target-system entity)
+  (do-ecs-entity-tree (target entity)
+    (push-entity-to-all-target-system target))
   entity)
 
 (defun.ps+ delete-ecs-entity (entity)

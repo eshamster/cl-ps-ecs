@@ -12,7 +12,7 @@
                 :is-list.ps+))
 (in-package :cl-ps-ecs-test.ecs)
 
-(plan 3)
+(plan 4)
 
 ;; TOOD: push and restore the ps environment
 
@@ -29,6 +29,10 @@
 (defstruct.ps+ (sys-test1 (:include ecs-system
                                     (target-component-types '(cmp-parent cmp-independent))
                                     (process (lambda (entity) (incf *test-counter*))))))
+
+(defun.ps+ add-components-for-sys-test1 (entity)
+  (add-ecs-component (make-cmp-parent) entity)
+  (add-ecs-component (make-cmp-independent) entity))
 
 (defstruct.ps+ (sample-entity (:include ecs-entity)) a)
 (defstruct.ps+ not-entity a b)
@@ -124,6 +128,24 @@
                            (ecs-main)
                            *test-counter*)
                          1)))
+    ;; test if descendants are registered to systems
+    (with-modify-env
+      (prove-in-both (is (add-sample-entities-for-inherit
+                          (lambda (parent child) 
+                            ;; prepare
+                            (register-ecs-system "sys1" (make-sys-test1))
+                            (add-components-for-sys-test1 parent)
+                            (add-components-for-sys-test1 child)
+                            ;; execute (*test-counter* should become 2) 
+                            (ecs-main)
+                            ;; delete and execute (*test-counter* should become 2) 
+                            (delete-ecs-entity parent)
+                            (ecs-main)
+                            ;; add parent again and execute (*test-counter* should become 4) 
+                            (add-ecs-entity parent)
+                            (ecs-main)
+                            *test-counter*))
+                         4)))
     (locally
         (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
       (with-modify-env
@@ -167,21 +189,18 @@
       (prove-in-both (is (add-sample-entities-for-inherit
                           (lambda (parent child)
                             (let ((grandchild (make-sample-entity)))
-                              (labels ((add-target-components (entity) 
-                                         (add-ecs-component (make-cmp-parent) entity)
-                                         (add-ecs-component (make-cmp-independent) entity)))
-                                ;; prepare
-                                (add-ecs-entity grandchild child)
-                                (register-ecs-system "sys1" (make-sys-test1))
-                                (add-target-components parent)
-                                (add-target-components child)
-                                (add-target-components grandchild)
-                                ;; execute (*test-counter* should become 3)
-                                (ecs-main)
-                                ;; delete and execute
-                                (delete-ecs-entity child)
-                                (ecs-main)
-                                *test-counter*))))
+                              ;; prepare
+                              (add-ecs-entity grandchild child)
+                              (register-ecs-system "sys1" (make-sys-test1))
+                              (add-components-for-sys-test1 parent)
+                              (add-components-for-sys-test1 child)
+                              (add-components-for-sys-test1 grandchild)
+                              ;; execute (*test-counter* should become 3)
+                              (ecs-main)
+                              ;; delete and execute
+                              (delete-ecs-entity child)
+                              (ecs-main)
+                              *test-counter*)))
                          4)))
     ;; test error
     (locally
