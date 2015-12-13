@@ -84,6 +84,7 @@
   (if (atom var)
       (with-gensyms (name)
         `(maphash (lambda (,name ,var)
+                    (declare (ignore ,name))
                     ,@body)
                   *ecs-system-hash*))
       `(maphash (lambda (,(car var) ,(cadr var))
