@@ -119,6 +119,11 @@
   (clean-ecs-entities)
   (clean-ecs-systems))
 
+(defun.ps+ push-entity-to-all-target-system (entity)
+  (do-ecs-systems system
+    (when (is-target-entity entity system)
+      (push entity (ecs-system-target-entities system)))))
+
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   (unless (ecs-entity-p entity)
     (error 'type-error :expected-type 'ecs-entity :datum entity))
@@ -128,9 +133,7 @@
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
              (push entity (ecs-entity-children parent))))
-  (do-ecs-systems system
-    (when (is-target-entity entity system)
-      (push entity (ecs-system-target-entities system))))
+  (push-entity-to-all-target-system entity)
   entity)
 
 (defun.ps+ delete-ecs-entity (entity)
