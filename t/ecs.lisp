@@ -58,6 +58,44 @@
 ;; ---- Start test ---- ;;
 
 (subtest
+    "Test component funcs"
+  (subtest
+      "Test add-ecs-component" 
+    (with-modify-env
+      (prove-in-both (is (let ((ent1 (make-sample-entity))
+                               (ent2 (make-sample-entity))
+                               (ent3 (make-sample-entity)))
+                           (register-ecs-system "sys1" (make-sys-test1))
+                           ;; registered to sys1
+                           (add-ecs-entity ent1)
+                           (add-ecs-component (make-cmp-parent) ent1)
+                           (add-ecs-component (make-cmp-independent) ent1)
+                           ;; not registered to sys1
+                           (add-ecs-component (make-cmp-parent) ent2)
+                           (add-ecs-component (make-cmp-independent) ent2)
+                           ;; not registered to sys1
+                           (add-ecs-entity ent3)
+                           (add-ecs-component (make-cmp-parent) ent3)
+                           ;; execute
+                           (ecs-main)
+                           *test-counter*)
+                         1)))
+    (locally
+        (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
+      (prove-in-both (is-error (add-ecs-component (make-sample-entity)
+                                                  (make-sample-entity))
+                               'type-error))
+      (prove-in-both (is-error (add-ecs-component (make-cmp-parent)
+                                                  (make-cmp-parent))
+                               'type-error))
+      (with-modify-env
+        (prove-in-both (is-error (let ((entity (make-sample-entity))
+                                       (component (make-cmp-parent)))
+                                   (add-ecs-component component entity)
+                                   (add-ecs-component component entity))
+                                 'simple-error))))))
+
+(subtest
     "Test entity funcs"
   (subtest
       "Test add-ecs-entity"

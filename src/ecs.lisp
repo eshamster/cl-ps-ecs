@@ -166,15 +166,17 @@
       (push entity (ecs-system-target-entities system))))
   system)
 
-;; [WIP]
 (defun.ps+ add-ecs-component (component entity)
+  "Add a component to an entity. If the entity is added to the environment, "
   (unless (ecs-component-p component)
     (error 'type-error :expected-type 'ecs-component :datum component))
   (unless (ecs-entity-p entity)
     (error 'type-error :expected-type 'ecs-entity :datum entity))
+  (when (find component (ecs-entity-components entity))
+    (error "The component is already added to the entity."))
   (push component (ecs-entity-components entity))
-  ;; TODO: regester to system only if the entity is registered to global
-  )
+  (when (find-the-entity entity)
+    (push-entity-to-all-target-system entity)))
 
 ;; [WIP]
 (defun.ps+ remove-ecs-component (component entity))
