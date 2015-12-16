@@ -7,6 +7,8 @@
            :ecs-component
            
            :ecs-entity
+           :get-ecs-component
+           :with-ecs-components
            :add-ecs-entity
            :delete-ecs-entity
            :do-ecs-entities
@@ -59,6 +61,22 @@
   `(dolist (entity *entity-list*)
      (do-ecs-entity-tree (,var entity)
        ,@body)))
+
+(defun.ps+ get-ecs-component (component-type entity)
+  "Get a component from entity by component-type"
+  (find-if (lambda (component)
+             (typep component component-type))
+           (ecs-entity-components entity)))
+
+(defmacro.ps+ with-ecs-components (target-types entity &body body)
+  "Bind components of entity to the type name. Throw error if some components are not included in the entity"
+  `(let ,(mapcar (lambda (type)
+                   `(,type (let ((found (get-ecs-component ',type ,entity)))
+                             (if found
+                                 found
+                                 (error ,(format nil "~A is not included in the entity" type))))))
+                 target-types) 
+     ,@body))
 
 (defun.ps+ find-a-entity (predicate)
   "Find a registered entity by predicate"

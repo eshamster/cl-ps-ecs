@@ -4,6 +4,8 @@
            :ecs-component
            
            :ecs-entity
+           :get-ecs-component
+           :with-ecs-components
            :add-ecs-entity
            :delete-ecs-entity
            :do-ecs-entities

@@ -102,6 +102,46 @@
 (subtest
     "Test entity funcs"
   (subtest
+      "Test get-ecs-component"
+    (with-modify-env
+      (prove-in-both (ok (typep (let ((entity (make-sample-entity)))
+                                  (add-ecs-component (make-cmp-child) entity)
+                                  (add-ecs-component (make-cmp-independent) entity)
+                                  (get-ecs-component 'cmp-independent entity))
+                                'cmp-independent)))
+      (prove-in-both (ok (typep (let ((entity (make-sample-entity)))
+                                  (add-ecs-component (make-cmp-child) entity)
+                                  (add-ecs-component (make-cmp-independent) entity)
+                                  (get-ecs-component 'cmp-parent entity))
+                                'cmp-parent)))
+      (prove-in-both (ok (null (let ((entity (make-sample-entity)))
+                                 (add-ecs-component (make-cmp-parent) entity)
+                                 (add-ecs-component (make-cmp-independent) entity)
+                                 (get-ecs-component 'cmp-child entity)))))))
+  (subtest
+      "Test with-ecs-components"
+    (with-modify-env
+      (prove-in-both (is (let ((entity (make-sample-entity))
+                               (counter 0))
+                           (add-ecs-component (make-cmp-child) entity)
+                           (add-ecs-component (make-cmp-independent) entity)
+                           (with-ecs-components (cmp-parent cmp-independent) entity
+                             ;; Note: In the current implementation, 'typep' for Parenscript
+                             ;;       cannot judge the type correctly
+                             (when cmp-parent ; (typep cmp-parent 'cmp-parent)
+                               (incf counter))
+                             (when cmp-independent ; (typep cmp-independent 'cmp-independent)
+                               (incf counter)))
+                           counter)
+                         2))
+      (prove-in-both (is-error (let ((entity (make-sample-entity)))
+                                 (add-ecs-component (make-cmp-parent) entity)
+                                 (add-ecs-component (make-cmp-independent) entity)
+                                 (with-ecs-components (cmp-child cmp-independent) entity
+                                   (+ 1 2)))
+                               'simple-error)))
+    (pass "TODO"))
+  (subtest
       "Test add-ecs-entity"
     (with-modify-env
       (is-list.ps+ (add-sample-entities-for-inherit
