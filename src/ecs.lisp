@@ -7,6 +7,7 @@
            :ecs-component
            
            :ecs-entity
+           :ecs-entity-parent
            :get-ecs-component
            :with-ecs-components
            :add-ecs-entity
