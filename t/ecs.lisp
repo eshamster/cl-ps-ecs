@@ -29,6 +29,15 @@
 (defstruct.ps+ (sys-test1 (:include ecs-system
                                     (target-component-types '(cmp-parent cmp-independent))
                                     (process (lambda (entity) (incf *test-counter*))))))
+(defstruct.ps+ (sys-test-hook
+                (:include ecs-system
+                          (target-component-types '(cmp-parent))
+                          (add-entity-hook (lambda (entity)
+                                             (when (ecs-entity-p entity)
+                                               (incf *test-counter* 1))))
+                          (delete-entity-hook (lambda (entity)
+                                                (when (ecs-entity-p entity)
+                                                  (incf *test-counter* 100)))))))
 
 (defun.ps+ add-components-for-sys-test1 (entity)
   (add-ecs-component (make-cmp-parent) entity)
@@ -315,7 +324,22 @@
                              'type-error))
     (prove-in-both (is-error (register-ecs-system (make-sys-test1)
                                                   (make-cmp-parent))
-                             'type-error))))
+                             'type-error)))
+  (subtest
+      "Test hooks of ecs-system"
+    (with-modify-env
+      (prove-in-both (is (let ((ent-target (make-sample-entity))
+                               (ent-not-target (make-sample-entity)))
+                           (register-ecs-system "test-hook" (make-sys-test-hook))
+                           (add-ecs-component (make-cmp-parent) ent-target)
+                           ;; *test-counter* must be +1 by add hook
+                           (add-ecs-entity ent-target)
+                           (add-ecs-entity ent-not-target)
+                           ;; *test-counter* must be +100 by delete hook
+                           (delete-ecs-entity ent-target)
+                           (delete-ecs-entity ent-not-target)
+                           *test-counter*)
+                         101)))))
 
 (defstruct.ps+ test1 a b)
 (defstruct.ps+ (test2 (:include test1)) c)

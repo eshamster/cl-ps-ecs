@@ -7,6 +7,7 @@
            :ecs-component
            
            :ecs-entity
+           :ecs-entity-p
            :ecs-entity-parent
            :get-ecs-component
            :with-ecs-components
@@ -21,6 +22,8 @@
            :ecs-system
            :target-component-types
            :process
+           :add-entity-hook
+           :delete-entity-hook
            
            :register-ecs-system
            :ecs-main
@@ -101,7 +104,9 @@
   (enable t)
   (target-entities '()) ;; automatically updated
   (target-component-types '())
-  (process (lambda (entity) entity)))
+  (process (lambda (entity) entity))
+  (add-entity-hook (lambda (entity) entity))
+  (delete-entity-hook (lambda (entity) entity)))
 
 (defmacro.ps+ do-ecs-systems (var &body body)
   (if (atom var)
@@ -145,15 +150,18 @@
 
 (defun.ps+ push-entity-to-system-if-needed (entity system)
   (when (is-target-entity entity system)
+    (funcall (ecs-system-add-entity-hook system) entity)
     (push entity (ecs-system-target-entities system))))
 
 (defun.ps+ push-entity-to-all-target-system (entity)
   (do-ecs-systems system
     (push-entity-to-system-if-needed entity system)))
 
-(defun.ps+ delete-entity-from-system (entity system)
-  (setf (ecs-system-target-entities system)
-        (remove entity (ecs-system-target-entities system))))
+(defun.ps+ delete-entity-from-system-if-needed (entity system)
+  (when (is-target-entity entity system)
+    (funcall (ecs-system-delete-entity-hook system) entity)
+    (setf (ecs-system-target-entities system)
+          (remove entity (ecs-system-target-entities system)))))
 
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
@@ -188,7 +196,7 @@
               (remove entity *entity-list*))))
   (do-ecs-entity-tree (target entity)
     (do-ecs-systems system
-      (delete-entity-from-system target system))))
+      (delete-entity-from-system-if-needed target system))))
 
 ;; [WIP]
 (defun.ps+ move-ecs-entity (entity new-parent)

@@ -4,6 +4,7 @@
            :ecs-component
            
            :ecs-entity
+           :ecs-entity-p
            :ecs-entity-parent
            :get-ecs-component
            :with-ecs-components
@@ -18,6 +19,8 @@
            :ecs-system
            :target-component-types
            :process
+           :add-entity-hook
+           :delete-entity-hook
            
            :register-ecs-system
            :ecs-main))
