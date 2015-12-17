@@ -151,6 +151,10 @@
   (do-ecs-systems system
     (push-entity-to-system-if-needed entity system)))
 
+(defun.ps+ delete-entity-from-system (entity system)
+  (setf (ecs-system-target-entities system)
+        (remove entity (ecs-system-target-entities system))))
+
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
   (unless (ecs-entity-p entity)
@@ -184,8 +188,7 @@
               (remove entity *entity-list*))))
   (do-ecs-entity-tree (target entity)
     (do-ecs-systems system
-      (setf (ecs-system-target-entities system)
-            (remove target (ecs-system-target-entities system))))))
+      (delete-entity-from-system target system))))
 
 ;; [WIP]
 (defun.ps+ move-ecs-entity (entity new-parent)
