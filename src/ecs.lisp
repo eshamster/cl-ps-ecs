@@ -143,10 +143,13 @@
   (clean-ecs-entities)
   (clean-ecs-systems))
 
+(defun.ps+ push-entity-to-system-if-needed (entity system)
+  (when (is-target-entity entity system)
+    (push entity (ecs-system-target-entities system))))
+
 (defun.ps+ push-entity-to-all-target-system (entity)
   (do-ecs-systems system
-    (when (is-target-entity entity system)
-      (push entity (ecs-system-target-entities system)))))
+    (push-entity-to-system-if-needed entity system)))
 
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
@@ -195,8 +198,7 @@
   (setf (gethash name *ecs-system-hash*) system)
   (setf (ecs-system-target-entities system) '())
   (do-ecs-entities entity
-    (when (is-target-entity entity system)
-      (push entity (ecs-system-target-entities system))))
+    (push-entity-to-system-if-needed entity system))
   system)
 
 (defun.ps+ add-ecs-component (component entity)
