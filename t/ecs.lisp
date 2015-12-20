@@ -14,6 +14,8 @@
 
 (plan 4)
 
+(declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
+
 ;; TOOD: push and restore the ps environment
 
 ;; ---- Definitions for test ---- ;;
@@ -28,7 +30,9 @@
 
 (defstruct.ps+ (sys-test1 (:include ecs-system
                                     (target-component-types '(cmp-parent cmp-independent))
-                                    (process (lambda (entity) (incf *test-counter*))))))
+                                    (process (lambda (entity)
+                                               (declare (ignore entity))
+                                               (incf *test-counter*))))))
 (defstruct.ps+ (sys-test-hook
                 (:include ecs-system
                           (target-component-types '(cmp-parent))
@@ -93,20 +97,18 @@
                            (ecs-main)
                            *test-counter*)
                          1)))
-    (locally
-        (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
-      (prove-in-both (is-error (add-ecs-component (make-sample-entity)
-                                                  (make-sample-entity))
-                               'type-error))
-      (prove-in-both (is-error (add-ecs-component (make-cmp-parent)
-                                                  (make-cmp-parent))
-                               'type-error))
-      (with-modify-env
-        (prove-in-both (is-error (let ((entity (make-sample-entity))
-                                       (component (make-cmp-parent)))
-                                   (add-ecs-component component entity)
-                                   (add-ecs-component component entity))
-                                 'simple-error))))))
+    (prove-in-both (is-error (add-ecs-component (make-sample-entity)
+                                                (make-sample-entity))
+                             'type-error))
+    (prove-in-both (is-error (add-ecs-component (make-cmp-parent)
+                                                (make-cmp-parent))
+                             'type-error))
+    (with-modify-env
+      (prove-in-both (is-error (let ((entity (make-sample-entity))
+                                     (component (make-cmp-parent)))
+                                 (add-ecs-component component entity)
+                                 (add-ecs-component component entity))
+                               'simple-error)))))
 
 (subtest
     "Test entity funcs"
@@ -147,7 +149,8 @@
                                  (add-ecs-component (make-cmp-parent) entity)
                                  (add-ecs-component (make-cmp-independent) entity)
                                  (with-ecs-components (cmp-child cmp-independent) entity
-                                   (+ 1 2)))
+                                   (print cmp-child)
+                                   (print cmp-independent)))
                                'simple-error)))
     (pass "TODO"))
   (subtest
@@ -195,19 +198,18 @@
                             (ecs-main)
                             *test-counter*))
                          4)))
-    (locally
-        (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
-      (with-modify-env
-        (prove-in-both (is-error (add-sample-entities-for-inherit
-                                  (lambda (parent child)
-                                    (add-ecs-entity child)))
-                                 'simple-error)))
-      (prove-in-both (is-error (add-ecs-entity (make-not-entity))
-                               'type-error))
-      (prove-in-both (is-error (add-ecs-entity (make-sample-entity) (make-not-entity))
-                               'type-error))
-      (prove-in-both (is-error (add-ecs-entity (make-sample-entity) (make-sample-entity))
-                               'simple-error))))
+    (with-modify-env
+      (prove-in-both (is-error (add-sample-entities-for-inherit
+                                (lambda (parent child)
+                                  (declare (ignore parent))
+                                  (add-ecs-entity child)))
+                               'simple-error)))
+    (prove-in-both (is-error (add-ecs-entity (make-not-entity))
+                             'type-error))
+    (prove-in-both (is-error (add-ecs-entity (make-sample-entity) (make-not-entity))
+                             'type-error))
+    (prove-in-both (is-error (add-ecs-entity (make-sample-entity) (make-sample-entity))
+                             'simple-error)))
   (subtest
       "Test delete-ecs-entities"
     ;; test if descendants are deleted
@@ -252,17 +254,15 @@
                               *test-counter*)))
                          4)))
     ;; test error
-    (locally
-        (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
-      (with-modify-env
-        (prove-in-both (is-error (add-sample-entities-for-inherit
-                                  (lambda (parent child)
-                                    (declare (ignore parent child))
-                                    (let ((not-registered (make-sample-entity)))
-                                      (delete-ecs-entity not-registered))))
-                                 'simple-error)))
-      (prove-in-both (is-error (delete-ecs-entity (make-not-entity))
-                               'type-error))))
+    (with-modify-env
+      (prove-in-both (is-error (add-sample-entities-for-inherit
+                                (lambda (parent child)
+                                  (declare (ignore parent child))
+                                  (let ((not-registered (make-sample-entity)))
+                                    (delete-ecs-entity not-registered))))
+                               'simple-error)))
+    (prove-in-both (is-error (delete-ecs-entity (make-not-entity))
+                             'type-error)))
   (subtest
       "Test do-ecs-entities"
     (with-modify-env
