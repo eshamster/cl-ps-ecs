@@ -25,6 +25,7 @@
            :add-entity-hook
            :delete-entity-hook
            
+           :do-ecs-components-of-entity
            :register-ecs-system
            :ecs-main
            :clean-ecs-env)
@@ -135,6 +136,12 @@
          target-component-types))
 
 ;; ---- Cross cutting ---- ;;
+
+;; entity component
+
+(defmacro.ps+ do-ecs-components-of-entity ((var entity) &body body)
+  `(dolist (,var (ecs-entity-components ,entity))
+     ,@body))
 
 ;; entity system
 

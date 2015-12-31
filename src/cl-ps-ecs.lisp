@@ -21,7 +21,8 @@
            :process
            :add-entity-hook
            :delete-entity-hook
-           
+
+           :do-ecs-components-of-entity           
            :register-ecs-system
            :ecs-main))
 (in-package :cl-ps-ecs)

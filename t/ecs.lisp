@@ -12,7 +12,7 @@
                 :is-list.ps+))
 (in-package :cl-ps-ecs-test.ecs)
 
-(plan 4)
+(plan 5)
 
 (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
 
@@ -340,6 +340,20 @@
                            (delete-ecs-entity ent-not-target)
                            *test-counter*)
                          101)))))
+
+(subtest
+    "Test do-ecs-components-of-entity"
+  (with-modify-env
+    (prove-in-both (is (let ((entity (make-sample-entity))
+                             (sum 0))
+                         (add-ecs-component (make-cmp-parent) entity)
+                         (add-ecs-component (make-cmp-independent) entity)
+                         (do-ecs-components-of-entity (component entity)
+                           (cond ((cmp-parent-p component) (incf sum 1))
+                                 ((cmp-independent-p component) (incf sum 4))
+                                 (t (incf sum 10000))))
+                         sum)
+                       5))))
 
 (defstruct.ps+ test1 a b)
 (defstruct.ps+ (test2 (:include test1)) c)
