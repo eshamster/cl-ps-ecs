@@ -5,6 +5,7 @@
            
            :ecs-entity
            :ecs-entity-p
+           :ecs-entity-id
            :ecs-entity-parent
            :get-ecs-component
            :with-ecs-components

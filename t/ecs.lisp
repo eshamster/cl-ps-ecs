@@ -113,6 +113,16 @@
 (subtest
     "Test entity funcs"
   (subtest
+      "Test ecs-entity-id"
+    (with-modify-env
+      (prove-in-both (ok (let* ((ent1 (make-sample-entity))
+                                (ent2 (make-sample-entity))
+                                (id1 (ecs-entity-id ent1))
+                                (id2 (ecs-entity-id ent2)))
+                           (and (numberp id1)
+                                (numberp id2)
+                                (not (= id1 id2))))))))
+  (subtest
       "Test get-ecs-component"
     (with-modify-env
       (prove-in-both (ok (typep (let ((entity (make-sample-entity)))
