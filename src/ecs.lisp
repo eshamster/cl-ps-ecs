@@ -180,7 +180,7 @@
   (unless (or (null parent) (ecs-entity-p parent))
     (error 'type-error :expected-type 'ecs-entity :datum parent))
   (unless (or (null parent) (find-the-entity parent))
-    (error "The paret is not registered"))
+    (error "The parent is not registered"))
   (if (null parent)
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
