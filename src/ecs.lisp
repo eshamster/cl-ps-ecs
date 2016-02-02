@@ -111,6 +111,7 @@
   (delete-entity-hook (lambda (entity) entity)))
 
 (defmacro.ps+ do-ecs-systems (var &body body)
+  "Iterates all registered ecs-system. If need only the object of each system, write as (do-ecs-systems sys ...). If need also the registered name, write as (do-ecs-system (name sys) ...)."
   (if (atom var)
       (with-gensyms (name)
         `(maphash (lambda (,name ,var)
