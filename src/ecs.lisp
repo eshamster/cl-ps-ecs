@@ -2,7 +2,8 @@
 (defpackage cl-ps-ecs.ecs
   (:use :cl
         :parenscript
-        :ps-experiment)
+        :ps-experiment
+        :cl-ps-ecs.utils)
   (:export :includes-all-component-types
            :ecs-component
            
@@ -127,15 +128,6 @@
     (when (ecs-system-enable system)
       (dolist (entity (ecs-system-target-entities system))
         (funcall (ecs-system-process system) entity)))))
-
-;; ---- independent ---- ;;
-
-(defun.ps+ includes-all-component-types (target-component-types components)
-  (every (lambda (type)
-           (some (lambda (comp)
-                   (typep comp type))
-                 components))
-         target-component-types))
 
 ;; ---- Cross cutting ---- ;;
 
