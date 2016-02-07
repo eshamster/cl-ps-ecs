@@ -4,6 +4,11 @@
            :ecs-component
            
            :ecs-entity
+           :ecs-entity-p
+           :ecs-entity-id
+           :ecs-entity-parent
+           :get-ecs-component
+           :with-ecs-components
            :add-ecs-entity
            :delete-ecs-entity
            :do-ecs-entities
@@ -15,7 +20,10 @@
            :ecs-system
            :target-component-types
            :process
-           
+           :add-entity-hook
+           :delete-entity-hook
+
+           :do-ecs-components-of-entity           
            :register-ecs-system
            :ecs-main))
 (in-package :cl-ps-ecs)

@@ -22,7 +22,8 @@
   :components ((:module "src"
                 :serial t
                 :components
-                ((:file "ecs")
+                ((:file "utils")
+                 (:file "ecs") 
                  (:file "cl-ps-ecs"))))
   :description "[WIP] Entity-Component-System written by ParenScript (Common Lisp) "
   :long-description

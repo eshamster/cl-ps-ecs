@@ -2,11 +2,17 @@
 (defpackage cl-ps-ecs.ecs
   (:use :cl
         :parenscript
-        :ps-experiment)
+        :ps-experiment
+        :cl-ps-ecs.utils)
   (:export :includes-all-component-types
            :ecs-component
            
            :ecs-entity
+           :ecs-entity-p
+           :ecs-entity-id
+           :ecs-entity-parent
+           :get-ecs-component
+           :with-ecs-components
            :add-ecs-entity
            :delete-ecs-entity
            :do-ecs-entities
@@ -18,7 +24,10 @@
            :ecs-system
            :target-component-types
            :process
+           :add-entity-hook
+           :delete-entity-hook
            
+           :do-ecs-components-of-entity
            :register-ecs-system
            :ecs-main
            :clean-ecs-env)
@@ -60,6 +69,22 @@
      (do-ecs-entity-tree (,var entity)
        ,@body)))
 
+(defun.ps+ get-ecs-component (component-type entity)
+  "Get a component from entity by component-type"
+  (find-if (lambda (component)
+             (typep component component-type))
+           (ecs-entity-components entity)))
+
+(defmacro.ps+ with-ecs-components (target-types entity &body body)
+  "Bind components of entity to the type name. Throw error if some components are not included in the entity"
+  `(let ,(mapcar (lambda (type)
+                   `(,type (let ((found (get-ecs-component ',type ,entity)))
+                             (if found
+                                 found
+                                 (error ,(format nil "~A is not included in the entity" type))))))
+                 target-types) 
+     ,@body))
+
 (defun.ps+ find-a-entity (predicate)
   "Find a registered entity by predicate"
   (do-ecs-entities entity
@@ -82,9 +107,12 @@
   (enable t)
   (target-entities '()) ;; automatically updated
   (target-component-types '())
-  (process (lambda (entity) entity)))
+  (process (lambda (entity) entity))
+  (add-entity-hook (lambda (entity) entity))
+  (delete-entity-hook (lambda (entity) entity)))
 
 (defmacro.ps+ do-ecs-systems (var &body body)
+  "Iterates all registered ecs-system. If need only the object of each system, write as (do-ecs-systems sys ...). If need also the registered name, write as (do-ecs-system (name sys) ...)."
   (if (atom var)
       (with-gensyms (name)
         `(maphash (lambda (,name ,var)
@@ -101,16 +129,13 @@
       (dolist (entity (ecs-system-target-entities system))
         (funcall (ecs-system-process system) entity)))))
 
-;; ---- independent ---- ;;
-
-(defun.ps+ includes-all-component-types (target-component-types components)
-  (every (lambda (type)
-           (some (lambda (comp)
-                   (typep comp type))
-                 components))
-         target-component-types))
-
 ;; ---- Cross cutting ---- ;;
+
+;; entity component
+
+(defmacro.ps+ do-ecs-components-of-entity ((var entity) &body body)
+  `(dolist (,var (ecs-entity-components ,entity))
+     ,@body))
 
 ;; entity system
 
@@ -124,10 +149,20 @@
   (clean-ecs-entities)
   (clean-ecs-systems))
 
+(defun.ps+ push-entity-to-system-if-needed (entity system)
+  (when (is-target-entity entity system)
+    (funcall (ecs-system-add-entity-hook system) entity)
+    (push entity (ecs-system-target-entities system))))
+
 (defun.ps+ push-entity-to-all-target-system (entity)
   (do-ecs-systems system
-    (when (is-target-entity entity system)
-      (push entity (ecs-system-target-entities system)))))
+    (push-entity-to-system-if-needed entity system)))
+
+(defun.ps+ delete-entity-from-system-if-needed (entity system)
+  (when (is-target-entity entity system)
+    (funcall (ecs-system-delete-entity-hook system) entity)
+    (setf (ecs-system-target-entities system)
+          (remove entity (ecs-system-target-entities system)))))
 
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
@@ -138,7 +173,7 @@
   (unless (or (null parent) (ecs-entity-p parent))
     (error 'type-error :expected-type 'ecs-entity :datum parent))
   (unless (or (null parent) (find-the-entity parent))
-    (error "The paret is not registered"))
+    (error "The parent is not registered"))
   (if (null parent)
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
@@ -162,8 +197,7 @@
               (remove entity *entity-list*))))
   (do-ecs-entity-tree (target entity)
     (do-ecs-systems system
-      (setf (ecs-system-target-entities system)
-            (remove target (ecs-system-target-entities system))))))
+      (delete-entity-from-system-if-needed target system))))
 
 ;; [WIP]
 (defun.ps+ move-ecs-entity (entity new-parent)
@@ -176,8 +210,7 @@
   (setf (gethash name *ecs-system-hash*) system)
   (setf (ecs-system-target-entities system) '())
   (do-ecs-entities entity
-    (when (is-target-entity entity system)
-      (push entity (ecs-system-target-entities system))))
+    (push-entity-to-system-if-needed entity system))
   system)
 
 (defun.ps+ add-ecs-component (component entity)
