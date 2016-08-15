@@ -16,8 +16,6 @@ dependencies:
     - ros -l ~/lisp/prove/prove.asd install prove
     - rm -rf ~/.roswell/local-projects/*
     - (cd ~/.roswell/local-projects ; git clone -b $CIRCLE_BRANCH https://github.com/eshamster/ps-experiment.git)
-    - ros run -e '(ql:quickload :cl-js)' -q
-    - (cd ~/.roswell/local-projects ; git clone https://github.com/akapav/js.git)
   cache_directories:
     - ~/.roswell
 
