@@ -166,12 +166,11 @@
 
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
-  (unless (ecs-entity-p entity)
-    (error 'type-error :expected-type 'ecs-entity :datum entity))
+  (check-type entity ecs-entity)
   (when (find-the-entity entity)
     (error "The entity is already registered."))
-  (unless (or (null parent) (ecs-entity-p parent))
-    (error 'type-error :expected-type 'ecs-entity :datum parent))
+  (when parent
+    (check-type parent ecs-entity))
   (unless (or (null parent) (find-the-entity parent))
     (error "The parent is not registered"))
   (if (null parent)
@@ -184,8 +183,7 @@
 
 (defun.ps+ delete-ecs-entity (entity)
   "Remove an entity from global *entity-list* with its descendants."
-  (unless (ecs-entity-p entity)
-    (error 'type-error :expected-type 'ecs-entity :datum entity))
+  (check-type entity ecs-entity)
   (unless (find-the-entity entity)
     (error "The entity is not registered"))
   (let ((parent (ecs-entity-parent entity)))
@@ -205,8 +203,7 @@
   ())
 
 (defun.ps+ register-ecs-system (name system)
-  (unless (ecs-system-p system)
-    (error 'type-error :expected-type 'ecs-system :datum system))
+  (check-type system ecs-system)
   (setf (gethash name *ecs-system-hash*) system)
   (setf (ecs-system-target-entities system) '())
   (do-ecs-entities entity
@@ -215,10 +212,8 @@
 
 (defun.ps+ add-ecs-component (component entity)
   "Add a component to an entity. If the entity is added to the environment, "
-  (unless (ecs-component-p component)
-    (error 'type-error :expected-type 'ecs-component :datum component))
-  (unless (ecs-entity-p entity)
-    (error 'type-error :expected-type 'ecs-entity :datum entity))
+  (check-type component ecs-component)
+  (check-type entity ecs-entity)
   (when (find component (ecs-entity-components entity))
     (error "The component is already added to the entity."))
   (push component (ecs-entity-components entity))
