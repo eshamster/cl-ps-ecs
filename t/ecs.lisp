@@ -307,7 +307,24 @@
                          3)))
     (with-modify-env
       (prove-in-both (ok (not (progn (add-sample-entities-for-loop)
-                                     (find-the-entity (make-sample-entity)))))))))
+                                     (find-the-entity (make-sample-entity))))))))
+  (subtest
+      "Test functions about tag"
+    (with-modify-env
+      (is-list.ps+
+       (let ((entity (make-sample-entity))
+             (result-list '()))
+         (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
+         (add-entity-tag entity "Tag1")
+         (add-entity-tag entity "Tag2")
+         (push (has-entity-tag entity "Tag1") result-list)
+         (push (has-entity-tag entity "Tag2") result-list)
+         (delete-entity-tag entity "Tag1")
+         (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
+         (reverse result-list))
+       '(0 "Tag1" "Tag2" 0)))))
+
+
 
 (subtest
     "Test system funcs"

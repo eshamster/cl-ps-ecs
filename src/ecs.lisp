@@ -20,6 +20,10 @@
            :find-the-entity
            :add-ecs-component
            :remove-ecs-component
+
+           :add-entity-tag
+           :has-entity-tag
+           :delete-entity-tag
            
            :ecs-system
            :target-component-types
@@ -46,6 +50,7 @@
 
 (defstruct.ps+ ecs-entity
   (id (incf *entity-id-counter*))
+  (tags '())
   (components '())
   parent
   (children '()))
@@ -96,6 +101,28 @@
   "Find a registered entity by comparing the address"
   (find-a-entity
    (lambda (target) (eq entity target))))
+
+;; - about tag - ;;
+
+(defun.ps+ add-entity-tag (entity tag)
+  (check-type entity ecs-entity)
+  (check-type tag string)
+  (push tag (ecs-entity-tags entity)))
+
+(defun.ps+ delete-entity-tag (entity tag)
+  (check-type entity ecs-entity)
+  (check-type tag string)
+  (setf (ecs-entity-tags entity)
+        (remove-if (lambda (target-tag)
+                     (string= target-tag tag))
+                   (ecs-entity-tags entity))))
+
+(defun.ps+ has-entity-tag (entity tag)
+  (check-type entity ecs-entity)
+  (check-type tag string)
+  (find-if (lambda (target-tag)
+             (string= target-tag tag))
+           (ecs-entity-tags entity)))
 
 ;; ---- system ---- ;;
 (defvar.ps+ *ecs-system-hash* (make-hash-table))
