@@ -336,6 +336,18 @@
                                                   (make-cmp-parent))
                              'type-error)))
   (subtest
+      "Test process-all"
+    (with-modify-env
+      (prove-in-both (is (let ((system (make-sys-test1
+                                        :process-all
+                                        (lambda (system)
+                                          (check-type system sys-test1)
+                                          (incf *test-counter*)))))
+                           (register-ecs-system "test-process-all" system)
+                           (ecs-main)
+                           *test-counter*)
+                         1))))
+  (subtest
       "Test hooks of ecs-system"
     (with-modify-env
       (prove-in-both (is (let ((ent-target (make-sample-entity))

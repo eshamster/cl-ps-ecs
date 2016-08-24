@@ -107,7 +107,8 @@
   (enable t)
   (target-entities '()) ;; automatically updated
   (target-component-types '())
-  (process (lambda (entity) entity))
+  (process (lambda (entity) entity)) ;; process each entity
+  (process-all (lambda (system) system))
   (add-entity-hook (lambda (entity) entity))
   (delete-entity-hook (lambda (entity) entity)))
 
@@ -126,6 +127,7 @@
 (defun.ps+ ecs-main ()
   (do-ecs-systems system
     (when (ecs-system-enable system)
+      (funcall (ecs-system-process-all system) system)
       (dolist (entity (ecs-system-target-entities system))
         (funcall (ecs-system-process system) entity)))))
 
