@@ -20,6 +20,10 @@
            :find-the-entity
            :add-ecs-component
            :remove-ecs-component
+
+           :add-entity-tag
+           :has-entity-tag
+           :delete-entity-tag
            
            :ecs-system
            :target-component-types
@@ -46,6 +50,7 @@
 
 (defstruct.ps+ ecs-entity
   (id (incf *entity-id-counter*))
+  (tags '())
   (components '())
   parent
   (children '()))
@@ -97,6 +102,28 @@
   (find-a-entity
    (lambda (target) (eq entity target))))
 
+;; - about tag - ;;
+
+(defun.ps+ add-entity-tag (entity tag)
+  (check-type entity ecs-entity)
+  (check-type tag string)
+  (push tag (ecs-entity-tags entity)))
+
+(defun.ps+ delete-entity-tag (entity tag)
+  (check-type entity ecs-entity)
+  (check-type tag string)
+  (setf (ecs-entity-tags entity)
+        (remove-if (lambda (target-tag)
+                     (string= target-tag tag))
+                   (ecs-entity-tags entity))))
+
+(defun.ps+ has-entity-tag (entity tag)
+  (check-type entity ecs-entity)
+  (check-type tag string)
+  (find-if (lambda (target-tag)
+             (string= target-tag tag))
+           (ecs-entity-tags entity)))
+
 ;; ---- system ---- ;;
 (defvar.ps+ *ecs-system-hash* (make-hash-table))
 
@@ -107,7 +134,8 @@
   (enable t)
   (target-entities '()) ;; automatically updated
   (target-component-types '())
-  (process (lambda (entity) entity))
+  (process (lambda (entity) entity)) ;; process each entity
+  (process-all (lambda (system) system))
   (add-entity-hook (lambda (entity) entity))
   (delete-entity-hook (lambda (entity) entity)))
 
@@ -126,6 +154,7 @@
 (defun.ps+ ecs-main ()
   (do-ecs-systems system
     (when (ecs-system-enable system)
+      (funcall (ecs-system-process-all system) system)
       (dolist (entity (ecs-system-target-entities system))
         (funcall (ecs-system-process system) entity)))))
 

@@ -307,7 +307,24 @@
                          3)))
     (with-modify-env
       (prove-in-both (ok (not (progn (add-sample-entities-for-loop)
-                                     (find-the-entity (make-sample-entity)))))))))
+                                     (find-the-entity (make-sample-entity))))))))
+  (subtest
+      "Test functions about tag"
+    (with-modify-env
+      (is-list.ps+
+       (let ((entity (make-sample-entity))
+             (result-list '()))
+         (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
+         (add-entity-tag entity "Tag1")
+         (add-entity-tag entity "Tag2")
+         (push (has-entity-tag entity "Tag1") result-list)
+         (push (has-entity-tag entity "Tag2") result-list)
+         (delete-entity-tag entity "Tag1")
+         (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
+         (reverse result-list))
+       '(0 "Tag1" "Tag2" 0)))))
+
+
 
 (subtest
     "Test system funcs"
@@ -335,6 +352,18 @@
     (prove-in-both (is-error (register-ecs-system (make-sys-test1)
                                                   (make-cmp-parent))
                              'type-error)))
+  (subtest
+      "Test process-all"
+    (with-modify-env
+      (prove-in-both (is (let ((system (make-sys-test1
+                                        :process-all
+                                        (lambda (system)
+                                          (check-type system sys-test1)
+                                          (incf *test-counter*)))))
+                           (register-ecs-system "test-process-all" system)
+                           (ecs-main)
+                           *test-counter*)
+                         1))))
   (subtest
       "Test hooks of ecs-system"
     (with-modify-env

@@ -16,6 +16,10 @@
            :find-the-entity
            :add-ecs-component
            :remove-ecs-component
+
+           :add-entity-tag
+           :has-entity-tag
+           :delete-entity-tag
            
            :ecs-system
            :target-component-types
