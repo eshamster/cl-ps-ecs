@@ -26,8 +26,10 @@
            :delete-entity-tag
            
            :ecs-system
+           :target-entities
            :target-component-types
            :process
+           :process-all
            :add-entity-hook
            :delete-entity-hook
            
@@ -80,14 +82,16 @@
              (typep component component-type))
            (ecs-entity-components entity)))
 
-(defmacro.ps+ with-ecs-components (target-types entity &body body)
+(defmacro.ps+ with-ecs-components ((&rest target-elements) entity &body body)
   "Bind components of entity to the type name. Throw error if some components are not included in the entity"
-  `(let ,(mapcar (lambda (type)
-                   `(,type (let ((found (get-ecs-component ',type ,entity)))
-                             (if found
-                                 found
-                                 (error ,(format nil "~A is not included in the entity" type))))))
-                 target-types) 
+  `(let ,(mapcar (lambda (element)
+                   (let ((var (if (listp element) (car element) element))
+                         (type (if (listp element) (cadr element) element)))
+                     `(,var (let ((found (get-ecs-component ',type ,entity)))
+                              (if found
+                                  found
+                                  (error ,(format nil "~A is not included in the entity" type)))))))
+                 target-elements) 
      ,@body))
 
 (defun.ps+ find-a-entity (predicate)
