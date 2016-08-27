@@ -26,8 +26,10 @@
            :delete-entity-tag
            
            :ecs-system
+           :target-entities
            :target-component-types
            :process
+           :process-all
            :add-entity-hook
            :delete-entity-hook
            
