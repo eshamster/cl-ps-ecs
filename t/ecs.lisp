@@ -146,12 +146,12 @@
                                (counter 0))
                            (add-ecs-component (make-cmp-child) entity)
                            (add-ecs-component (make-cmp-independent) entity)
-                           (with-ecs-components (cmp-parent cmp-independent) entity
+                           (with-ecs-components (cmp-parent (test cmp-independent)) entity
                              ;; Note: In the current implementation, 'typep' for Parenscript
                              ;;       cannot judge the type correctly
                              (when cmp-parent ; (typep cmp-parent 'cmp-parent)
                                (incf counter))
-                             (when cmp-independent ; (typep cmp-independent 'cmp-independent)
+                             (when test ; (typep test 'cmp-independent)
                                (incf counter)))
                            counter)
                          2))
@@ -323,8 +323,6 @@
          (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
          (reverse result-list))
        '(0 "Tag1" "Tag2" 0)))))
-
-
 
 (subtest
     "Test system funcs"
