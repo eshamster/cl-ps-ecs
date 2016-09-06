@@ -310,19 +310,44 @@
                                      (find-the-entity (make-sample-entity))))))))
   (subtest
       "Test functions about tag"
-    (with-modify-env
-      (is-list.ps+
-       (let ((entity (make-sample-entity))
-             (result-list '()))
-         (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
-         (add-entity-tag entity "Tag1")
-         (add-entity-tag entity "Tag2")
-         (push (has-entity-tag entity "Tag1") result-list)
-         (push (has-entity-tag entity "Tag2") result-list)
-         (delete-entity-tag entity "Tag1")
-         (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
-         (reverse result-list))
-       '(0 "Tag1" "Tag2" 0)))))
+    (subtest
+        "Basic functions"
+      (with-modify-env
+        (is-list.ps+
+         (let ((entity (make-sample-entity))
+               (result-list '()))
+           (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
+           (add-entity-tag entity "Tag1")
+           (add-entity-tag entity "Tag2")
+           (push (has-entity-tag entity "Tag1") result-list)
+           (push (has-entity-tag entity "Tag2") result-list)
+           (delete-entity-tag entity "Tag1")
+           (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
+           (reverse result-list))
+         '(0 "Tag1" "Tag2" 0))))
+    (subtest
+        "Auxiliary functions and macros"
+      (with-modify-env
+        (is-list.ps+
+         (let ((result '())
+               (entity-list (list (make-sample-entity)
+                                  (make-sample-entity)
+                                  (make-sample-entity))))
+           (dolist (entity entity-list)
+             (add-entity-tag entity "Tag1")
+             (add-entity-tag entity "Tag2")
+             (add-ecs-entity entity))
+           (delete-entity-tag (nth 2 entity-list) "Tag1")
+           (let ((found (find-a-entity-by-tag "Tag1")))
+             (check-type found ecs-entity))
+           (push (if (find-a-entity-by-tag "Not-found") 1 0) result)
+           (push (let ((sum 0))
+                   (do-tagged-ecs-entities (entity "Tag1")
+                     (incf sum))
+                   sum)
+                 result)
+           (reverse result))
+         '(0 2))))))
 
 (subtest
     "Test system funcs"

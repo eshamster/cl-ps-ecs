@@ -24,6 +24,8 @@
            :add-entity-tag
            :has-entity-tag
            :delete-entity-tag
+           :find-a-entity-by-tag
+           :do-tagged-ecs-entities
            
            :ecs-system
            :target-entities
@@ -127,6 +129,16 @@
   (find-if (lambda (target-tag)
              (string= target-tag tag))
            (ecs-entity-tags entity)))
+
+(defun.ps+ find-a-entity-by-tag (tag)
+  (check-type tag string)
+  (find-a-entity (lambda (entity)
+                   (has-entity-tag entity tag))))
+
+(defmacro.ps+ do-tagged-ecs-entities ((var tag) &body body)
+  `(do-ecs-entities ,var
+     (when (has-entity-tag ,var ,tag)
+       ,@body)))
 
 ;; ---- system ---- ;;
 (defvar.ps+ *ecs-system-hash* (make-hash-table))
