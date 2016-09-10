@@ -110,10 +110,11 @@
 
 ;; - about tag - ;;
 
-(defun.ps+ add-entity-tag (entity tag)
+(defun.ps+ add-entity-tag (entity &rest tags)
   (check-type entity ecs-entity)
-  (check-type tag string)
-  (push tag (ecs-entity-tags entity)))
+  (dolist (tag tags)
+    (check-type tag string)
+    (push tag (ecs-entity-tags entity))))
 
 (defun.ps+ delete-entity-tag (entity tag)
   (check-type entity ecs-entity)
