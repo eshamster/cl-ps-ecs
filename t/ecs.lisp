@@ -318,13 +318,14 @@
                (result-list '()))
            (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
            (add-entity-tag entity "Tag1")
-           (add-entity-tag entity "Tag2")
+           (add-entity-tag entity "Tag2" "Tag3")
            (push (has-entity-tag entity "Tag1") result-list)
            (push (has-entity-tag entity "Tag2") result-list)
+           (push (has-entity-tag entity "Tag3") result-list)
            (delete-entity-tag entity "Tag1")
            (push (if (has-entity-tag entity "Tag1") 1 0) result-list)
            (reverse result-list))
-         '(0 "Tag1" "Tag2" 0))))
+         '(0 "Tag1" "Tag2" "Tag3" 0))))
     (subtest
         "Auxiliary functions and macros"
       (with-modify-env
