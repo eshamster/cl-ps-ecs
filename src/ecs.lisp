@@ -179,9 +179,12 @@
 
 ;; entity component
 
-(defmacro.ps+ do-ecs-components-of-entity ((var entity) &body body)
+(defmacro.ps+ do-ecs-components-of-entity ((var entity &key component-type) &body body)
   `(dolist (,var (ecs-entity-components ,entity))
-     ,@body))
+     ,@(if component-type
+           `((when (typep ,var ,component-type)
+               ,@body))
+           body)))
 
 ;; entity system
 
