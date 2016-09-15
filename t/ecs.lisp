@@ -411,12 +411,20 @@
                              (sum 0))
                          (add-ecs-component (make-cmp-parent) entity)
                          (add-ecs-component (make-cmp-independent) entity)
+                         ;; sum should be 5
                          (do-ecs-components-of-entity (component entity)
                            (cond ((cmp-parent-p component) (incf sum 1))
                                  ((cmp-independent-p component) (incf sum 4))
                                  (t (incf sum 10000))))
+                         (add-ecs-component (make-cmp-child) entity)
+                         ;; sum should be 7
+                         (do-ecs-components-of-entity (component entity
+                                                       :component-type 'cmp-parent)
+                           (cond ((cmp-parent-p component) (incf sum 1))
+                                 ((cmp-independent-p component) (incf sum 4))
+                                 (t (incf sum 10000))))
                          sum)
-                       5))))
+                       7))))
 
 
 (finalize)
