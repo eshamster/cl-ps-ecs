@@ -28,6 +28,7 @@
            :do-tagged-ecs-entities
            
            :ecs-system
+           :ecs-system-target-entities
            :target-entities
            :target-component-types
            :process
