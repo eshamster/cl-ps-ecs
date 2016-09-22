@@ -59,11 +59,15 @@
   (tags '())
   (components '())
   parent
-  (children '()))
+  (children '())
+  (registerp nil) ;; This is used only in this library.
+  )
 
 (defvar.ps+ *entity-list* '())
 
 (defun.ps+ clean-ecs-entities ()
+  (do-ecs-entities entity
+    (setf (ecs-entity-registerp entity) nil))
   (setf *entity-list* '()))
 
 (defmacro.ps+ do-ecs-entity-tree ((var top-entity) &body body)
@@ -107,8 +111,9 @@
 
 (defun.ps+ find-the-entity (entity)
   "Find a registered entity by comparing the address"
-  (find-a-entity
-   (lambda (target) (eq entity target))))
+  (if (ecs-entity-registerp entity)
+      entity
+      nil))
 
 ;; - about tag - ;;
 
@@ -224,6 +229,7 @@
     (check-type parent ecs-entity))
   (unless (or (null parent) (find-the-entity parent))
     (error "The parent is not registered"))
+  (setf (ecs-entity-registerp entity) t)
   (if (null parent)
       (push entity *entity-list*)
       (progn (setf (ecs-entity-parent entity) parent)
@@ -237,6 +243,8 @@
   (check-type entity ecs-entity)
   (unless (find-the-entity entity)
     (error "The entity is not registered"))
+  (do-ecs-entity-tree (node entity)
+    (setf (ecs-entity-registerp node) nil))
   (let ((parent (ecs-entity-parent entity)))
     (if parent
         (progn (setf (ecs-entity-children parent)
