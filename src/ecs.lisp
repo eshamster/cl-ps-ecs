@@ -65,11 +65,6 @@
 
 (defvar.ps+ *entity-list* '())
 
-(defun.ps+ clean-ecs-entities ()
-  (do-ecs-entities entity
-    (setf (ecs-entity-registerp entity) nil))
-  (setf *entity-list* '()))
-
 (defmacro.ps+ do-ecs-entity-tree ((var top-entity) &body body)
   (with-gensyms (rec)
     `(labels ((,rec (,var)
@@ -83,6 +78,11 @@
   `(dolist (entity *entity-list*)
      (do-ecs-entity-tree (,var entity)
        ,@body)))
+
+(defun.ps+ clean-ecs-entities ()
+  (do-ecs-entities entity
+    (setf (ecs-entity-registerp entity) nil))
+  (setf *entity-list* '()))
 
 (defun.ps+ get-ecs-component (component-type entity)
   "Get a component from entity by component-type"
