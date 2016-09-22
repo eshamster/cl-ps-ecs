@@ -15,6 +15,7 @@
            :find-a-entity
            :find-the-entity
            :add-ecs-component
+           :add-ecs-component-list
            :remove-ecs-component
 
            :add-entity-tag

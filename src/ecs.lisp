@@ -19,6 +19,7 @@
            :find-a-entity
            :find-the-entity
            :add-ecs-component
+           :add-ecs-component-list
            :remove-ecs-component
 
            :add-entity-tag
@@ -260,15 +261,24 @@
     (push-entity-to-system-if-needed entity system))
   system)
 
-(defun.ps+ add-ecs-component (component entity)
-  "Add a component to an entity. If the entity is added to the environment, "
-  (check-type component ecs-component)
-  (check-type entity ecs-entity)
+(defun.ps+ check-component-uniqueness (component entity)
+  ;; TODO: Fix: The ps-experiment:find has a bag in a block (dolist).
   (when (find component (ecs-entity-components entity))
-    (error "The component is already added to the entity."))
-  (push component (ecs-entity-components entity))
+    (error "The component is already added to the entity.")))
+
+(defun.ps+ add-ecs-component-list (entity &rest component-list)
+  "Add components to an entity. If the entity is added to the environment, "
+  (check-type entity ecs-entity)
+  (dolist (component component-list)
+    (check-type component ecs-component)
+    (check-component-uniqueness component entity)
+    (push component (ecs-entity-components entity)))
   (when (find-the-entity entity)
     (push-entity-to-all-target-system entity)))
+
+(defun.ps+ add-ecs-component (component entity)
+  "Add a component to an entity. If the entity is added to the environment, "
+  (add-ecs-component-list entity component))
 
 ;; [WIP]
 (defun.ps+ delete-ecs-component (component entity))

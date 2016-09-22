@@ -85,8 +85,10 @@
                            (register-ecs-system "sys1" (make-sys-test1))
                            ;; registered to sys1
                            (add-ecs-entity ent1)
-                           (add-ecs-component (make-cmp-parent) ent1)
-                           (add-ecs-component (make-cmp-independent) ent1)
+                           (add-ecs-component-list
+                            ent1
+                            (make-cmp-parent)
+                            (make-cmp-independent))
                            ;; not registered to sys1
                            (add-ecs-component (make-cmp-parent) ent2)
                            (add-ecs-component (make-cmp-independent) ent2)
