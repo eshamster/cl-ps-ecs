@@ -329,6 +329,24 @@
            (reverse result-list))
          '(0 "Tag1" "Tag2" "Tag3" 0))))
     (subtest
+        "check functions"
+      (defun.ps+ make-sample-entity-for-check-tag ()
+        (let ((entity (make-sample-entity)))
+          (add-entity-tag entity "Tag1")
+          (add-entity-tag entity "Tag2")
+          (add-entity-tag entity "Tag3")
+          entity))
+      (prove-in-both
+       (ok (check-entity-tags (make-sample-entity-for-check-tag) "Tag2")))
+      (prove-in-both
+       (ok (check-entity-tags (make-sample-entity-for-check-tag) "Tag1" "Tag3")))
+      (prove-in-both
+       (is-error (check-entity-tags (make-sample-entity-for-check-tag) "Not-exist")
+                 'simple-error))
+      (prove-in-both
+       (is-error (check-entity-tags (make-sample-entity-for-check-tag) "Tag1" "Not-exist")
+                 'simple-error)))
+    (subtest
         "Auxiliary functions and macros"
       (with-modify-env
         (is-list.ps+

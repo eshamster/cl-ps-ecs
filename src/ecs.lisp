@@ -24,6 +24,7 @@
 
            :add-entity-tag
            :has-entity-tag
+           :check-entity-tags
            :delete-entity-tag
            :find-a-entity-by-tag
            :do-tagged-ecs-entities
@@ -139,6 +140,12 @@
   (find-if (lambda (target-tag)
              (string= target-tag tag))
            (ecs-entity-tags entity)))
+
+(defun.ps+ check-entity-tags (entity &rest tags)
+  (dolist (tag tags)
+    (unless (has-entity-tag entity tag)
+      (error "The entity has not a tag '~A'." tag)))
+  t)
 
 (defun.ps+ find-a-entity-by-tag (tag)
   (check-type tag string)
