@@ -24,6 +24,7 @@
 
            :add-entity-tag
            :has-entity-tag
+           :check-entity-tags
            :delete-entity-tag
            :find-a-entity-by-tag
            :do-tagged-ecs-entities
@@ -65,19 +66,21 @@
 
 (defvar.ps+ *entity-list* '())
 
-(defmacro.ps+ do-ecs-entity-tree ((var top-entity) &body body)
-  (with-gensyms (rec)
-    `(labels ((,rec (,var)
-                (unless (null ,var)
+(defmacro.ps+ do-ecs-entity-tree-list ((var entity-tree-list) &body body)
+  (with-gensyms (rec entity-list)
+    `(labels ((,rec (,entity-list)
+                (dolist (,var ,entity-list)
                   ,@body
-                  (dolist (child (ecs-entity-children ,var))
-                    (,rec child)))))
-       (,rec ,top-entity))))
+                  (,rec (ecs-entity-children ,var)))))
+       (,rec ,entity-tree-list))))
+
+(defmacro.ps+ do-ecs-entity-tree ((var top-entity) &body body)
+  `(do-ecs-entity-tree-list (,var (list ,top-entity))
+     ,@body))
 
 (defmacro.ps+ do-ecs-entities (var &body body)
-  `(dolist (entity *entity-list*)
-     (do-ecs-entity-tree (,var entity)
-       ,@body)))
+  `(do-ecs-entity-tree-list (,var *entity-list*)
+     ,@body))
 
 (defun.ps+ clean-ecs-entities ()
   (do-ecs-entities entity
@@ -137,6 +140,12 @@
   (find-if (lambda (target-tag)
              (string= target-tag tag))
            (ecs-entity-tags entity)))
+
+(defun.ps+ check-entity-tags (entity &rest tags)
+  (dolist (tag tags)
+    (unless (has-entity-tag entity tag)
+      (error "The entity has not a tag '~A'." tag)))
+  t)
 
 (defun.ps+ find-a-entity-by-tag (tag)
   (check-type tag string)

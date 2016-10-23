@@ -20,6 +20,7 @@
 
            :add-entity-tag
            :has-entity-tag
+           :check-entity-tags
            :delete-entity-tag
            :find-a-entity-by-tag
            :do-tagged-ecs-entities
