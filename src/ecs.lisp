@@ -188,12 +188,12 @@
                 *ecs-system-hash*)))
 
 (defun.ps+ ecs-main ()
+  (flush-ecs-entities-buffer)
   (do-ecs-systems system
     (when (ecs-system-enable system)
       (funcall (ecs-system-process-all system) system)
       (dolist (entity (ecs-system-target-entities system))
-        (funcall (ecs-system-process system) entity))))
-  (flush-ecs-entities-buffer))
+        (funcall (ecs-system-process system) entity)))))
 
 ;; ---- Cross cutting ---- ;;
 
