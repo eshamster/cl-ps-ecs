@@ -10,6 +10,7 @@
            :get-ecs-component
            :with-ecs-components
            :add-ecs-entity
+           :add-ecs-entity-to-buffer
            :delete-ecs-entity
            :do-ecs-entities
            :find-a-entity

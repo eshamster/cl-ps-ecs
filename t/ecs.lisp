@@ -72,6 +72,12 @@
     (add-ecs-entity (make-sample-entity :a 3) entity)
     (add-ecs-entity (make-sample-entity :a 4) entity)))
 
+(defun.ps+ count-entity-list ()
+  (let ((count 0))
+    (do-ecs-entities entity
+      (incf count))
+    count))
+
 ;; ---- Start test ---- ;;
 
 (subtest
@@ -222,6 +228,20 @@
                              'type-error))
     (prove-in-both (is-error (add-ecs-entity (make-sample-entity) (make-sample-entity))
                              'simple-error)))
+  (subtest
+      "Test add-ecs-entity-to-buffer"
+    (with-modify-env
+      (prove-in-both (is (let ((sum 0)
+                               (parent (make-sample-entity)))
+                           (add-ecs-entity (make-sample-entity))
+                           (add-ecs-entity-to-buffer parent)
+                           (add-ecs-entity-to-buffer (make-sample-entity) parent)
+                           ;; 1 should be added.
+                           (incf sum (count-entity-list))
+                           (ecs-main)
+                           ;; 3 should be added.
+                           (incf sum (count-entity-list)))
+                         4))))
   (subtest
       "Test delete-ecs-entities"
     ;; test if descendants are deleted
