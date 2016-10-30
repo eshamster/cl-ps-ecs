@@ -14,6 +14,7 @@
            :get-ecs-component
            :with-ecs-components
            :add-ecs-entity
+           :add-ecs-entity-to-buffer
            :delete-ecs-entity
            :do-ecs-entities
            :find-a-entity
@@ -65,6 +66,8 @@
   )
 
 (defvar.ps+ *entity-list* '())
+(defvar.ps+ *entity-list-buffer* '()
+  "The list of (entity parent) pairs. This is added to by add-ecs-entity-to-buffer.")
 
 (defmacro.ps+ do-ecs-entity-tree-list ((var entity-tree-list) &body body)
   (with-gensyms (rec entity-list)
@@ -189,7 +192,8 @@
     (when (ecs-system-enable system)
       (funcall (ecs-system-process-all system) system)
       (dolist (entity (ecs-system-target-entities system))
-        (funcall (ecs-system-process system) entity)))))
+        (funcall (ecs-system-process system) entity))))
+  (flush-ecs-entities-buffer))
 
 ;; ---- Cross cutting ---- ;;
 
@@ -246,6 +250,18 @@
   (do-ecs-entity-tree (target entity)
     (push-entity-to-all-target-system target))
   entity)
+
+(defun.ps+ add-ecs-entity-to-buffer (entity &optional (parent nil))
+  "Add the entity to the buffer of the global list. They are added in the loop, ecs-main. This is useful for adding entities in do-ecs-entities loop."
+  ;;--- TODO: Error check for arguments. (Lately these are checked in add-ecs-entity).
+  (push (list entity parent) *entity-list-buffer*))
+
+(defun.ps+ flush-ecs-entities-buffer ()
+  "Add all entities in the buffer."
+  ;; The 'reverse' is required to add entities in the order of addition. Otherwize, the relationships between a parent and its children cannot be properly processed.
+  (dolist (pair (reverse *entity-list-buffer*))
+    (add-ecs-entity (car pair) (cadr pair)))
+  (setf *entity-list-buffer* '()))
 
 (defun.ps+ delete-ecs-entity (entity)
   "Remove an entity from global *entity-list* with its descendants."
