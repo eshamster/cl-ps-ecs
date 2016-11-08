@@ -3,6 +3,7 @@
   (:export :includes-all-component-types
            :ecs-component
            
+           :make-ecs-entity
            :ecs-entity
            :ecs-entity-p
            :ecs-entity-id
