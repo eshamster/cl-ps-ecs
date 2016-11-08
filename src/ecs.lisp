@@ -162,10 +162,11 @@
        ,@body)))
 
 ;; ---- system ---- ;;
-(defvar.ps+ *ecs-system-hash* (make-hash-table))
+(defvar.ps+ *ecs-system-list* '()
+  "An element of the list is a pair of (name system)")
 
 (defun.ps+ clean-ecs-systems ()
-  (setf *ecs-system-hash* (make-hash-table)))
+  (setf *ecs-system-list* '()))
 
 (defstruct.ps+ ecs-system
   (enable t)
@@ -178,15 +179,15 @@
 
 (defmacro.ps+ do-ecs-systems (var &body body)
   "Iterates all registered ecs-system. If need only the object of each system, write as (do-ecs-systems sys ...). If need also the registered name, write as (do-ecs-system (name sys) ...)."
-  (if (atom var)
-      (with-gensyms (name)
-        `(maphash (lambda (,name ,var)
-                    (declare (ignore ,name))
-                    ,@body)
-                  *ecs-system-hash*))
-      `(maphash (lambda (,(car var) ,(cadr var))
-                  ,@body)
-                *ecs-system-hash*)))
+  (with-gensyms (pair)
+    (if (atom var)
+        `(dolist (,pair *ecs-system-list*)
+           (let ((,var (cadr ,pair)))
+             ,@body))
+        `(dolist (,pair *ecs-system-list*)
+           (let ((,(car var) (car ,pair))
+                 (,(cadr var) (cadr ,pair)))
+             ,@body)))))
 
 (defun.ps+ ecs-main ()
   (flush-ecs-entities-buffer)
@@ -289,7 +290,13 @@
 
 (defun.ps+ register-ecs-system (name system)
   (check-type system ecs-system)
-  (setf (gethash name *ecs-system-hash*) system)
+  (let ((found (find-if #'(lambda (pair)
+                            (string= (car pair) name))
+                        *ecs-system-list*)))
+    (if found
+        (setf (cadr found) system)
+        (setf *ecs-system-list*
+              (append *ecs-system-list* (list (list name system))))))
   (setf (ecs-system-target-entities system) '())
   (do-ecs-entities entity
     (push-entity-to-system-if-needed entity system))

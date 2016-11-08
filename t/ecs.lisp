@@ -390,6 +390,19 @@
            (reverse result))
          '(0 2))))))
 
+(defstruct.ps+ (sys-order1 (:include ecs-system
+                                     (target-component-types '(cmp-independent))
+                                     (process (lambda (entity)
+                                                (declare (ignore entity))
+                                                (incf *test-counter*))))))
+
+(defstruct.ps+ (sys-order2 (:include ecs-system
+                                     (target-component-types '(cmp-independent))
+                                     (process (lambda (entity)
+                                                (declare (ignore entity))
+                                                (setf *test-counter*
+                                                      (* *test-counter* 2)))))))
+
 (subtest
     "Test system funcs"
   (subtest
@@ -415,7 +428,31 @@
                              'type-error))
     (prove-in-both (is-error (register-ecs-system (make-sys-test1)
                                                   (make-cmp-parent))
-                             'type-error)))
+                             'type-error))
+    (subtest
+        "Test the order of the registeration."
+      (with-modify-env
+        (prove-in-both (is (let ((entity (make-sample-entity)))
+                             (add-ecs-component (make-cmp-independent) entity)
+                             (add-ecs-entity entity)
+                             ;; counter should be 1
+                             (register-ecs-system "+" (make-sys-order1))
+                             ;; counter should be 2
+                             (register-ecs-system "*" (make-sys-order2))
+                             (ecs-main)
+                             *test-counter*)
+                           2)))
+      (with-modify-env
+        (prove-in-both (is (let ((entity (make-sample-entity)))
+                             (add-ecs-component (make-cmp-independent) entity)
+                             (add-ecs-entity entity)
+                             ;; counter should be 0
+                             (register-ecs-system "*" (make-sys-order2))
+                             ;; counter should be 1
+                             (register-ecs-system "+" (make-sys-order1))
+                             (ecs-main)
+                             *test-counter*)
+                           1)))))
   (subtest
       "Test process-all"
     (with-modify-env
