@@ -10,7 +10,7 @@
 
 (defsystem cl-ps-ecs-test
   :author "eshamster"
-  :license ""
+  :license "LLGPL"
   :depends-on (:cl-ps-ecs
                :parenscript
                :ps-experiment
