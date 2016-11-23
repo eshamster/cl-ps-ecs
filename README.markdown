@@ -96,6 +96,68 @@ ID = 2, pos = (0, -1)
 ID = 1, pos = (1, 0)
 ```
 
+## Basic structures and functions
+
+### `ecs-entity`
+
+The `ecs-entity` has some members. However, these will not be set by users. The `add-ecs-entity` can set a parent of an entity by its second argument. The members, `parent` and `children`, are set by it.
+
+```lisp
+(defstruct.ps+ ecs-entity
+  (id (incf *entity-id-counter*))
+  (tags '())
+  (components '())
+  parent
+  (children '())
+  (registerp nil) ;; This is used only in this library.
+  )
+```
+
+### `ecs-component`
+
+The `ecs-component` has no default member.
+
+### `ecs-system`
+
+The main members in `ecs-system` are `target-component-types` and `process`. See the above quickstart to know about them. 
+
+Then other important members are the followings.
+
+- `process-all`: This is called once in `ecs-main`. The argument is the system itself.
+- `target-entities`: This is automatically updated. So don't update it by manual. But reading it is useful in some cases.
+- `add-entity-hook`: This is called when the system recognizes its target entity.
+- `delete-entity-hook`: This is called when the system unrecognizes its target entity.
+
+```lisp
+(defstruct.ps+ ecs-system
+  (enable t)
+  (target-entities '()) ;; automatically updated
+  (target-component-types '())
+  (process (lambda (entity) entity)) ;; process each entity
+  (process-all (lambda (system) system))
+  (add-entity-hook (lambda (entity) entity))
+  (delete-entity-hook (lambda (entity) entity)))
+```
+
+## Tag system
+
+Tags are important to distinguish who is an entity.
+
+- Add and delete
+	- `add-entity-tag` (Ex. `(add-entity-tag entity "enemy" "slime")`)
+	- `delete-entity-tag` (Ex. `(delete-entity-tag entity "slime")`)
+- Check
+	- `has-entity-tag` only returns whether the entity has the tag or not. (Ex. `(has-entity-tag entity "enemy")`)
+	- `check-entity-tags` thorws error if the entity doesn't have the tag. (Ex. `(check-entity-tag entity "enemy")`)
+- Utils
+	- `find-a-entity-by-tag` finds a entity that has a specified tag from global environment. (Ex. `(find-a-entity-by-tag "slime")`)
+	- `do-tagged-ecs-entities` is used for processing all entities that have a specified tag. (Ex. see below)
+
+```lisp
+(do-tagged-ecs-entities (entity "enemy")
+  (print (ecs-entity-id entity)))
+```
+
 ## Installation
 
 This library and some dependent libraries are not registered in quicklisp. So please clone them under the directory that quicklisp can find. (If you use [Roswell](https://github.com/roswell/roswell), the default is `~/.roswell/local-projects`).
