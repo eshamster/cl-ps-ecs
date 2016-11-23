@@ -15,7 +15,7 @@
 (defsystem cl-ps-ecs
   :version "0.1"
   :author "eshamster"
-  :license ""
+  :license "LLGPL"
   :depends-on (:parenscript
                :alexandria
                :ps-experiment)
