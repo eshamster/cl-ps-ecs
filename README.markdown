@@ -1,8 +1,8 @@
+![Build Status](https://circleci.com/gh/eshamster/cl-ps-ecs.png?style=shield)
+
 # Cl-Ps-Ecs
 
 `Cl-Ps-Ecs` is an entity-component-system library for Common Lisp and for Parenscript.
-
-
 
 ## Usage
 
