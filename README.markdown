@@ -1,4 +1,5 @@
-![Build Status](https://circleci.com/gh/eshamster/cl-ps-ecs.png?style=shield)
+[![Build Status](https://travis-ci.org/eshamster/cl-ps-ecs.svg?branch=master)](https://travis-ci.org/eshamster/cl-ps-ecs)
+[![Coverage Status](https://coveralls.io/repos/github/eshamster/cl-ps-ecs/badge.svg?branch=master)](https://coveralls.io/github/eshamster/cl-ps-ecs?branch=master)
 
 # Cl-Ps-Ecs
 
