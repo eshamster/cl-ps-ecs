@@ -9,6 +9,7 @@
                 :clean-ecs-env)
   (:import-from :ps-experiment-test.test-utils
                 :prove-in-both
+                :with-prove-in-both
                 :is-list.ps+))
 (in-package :cl-ps-ecs-test.ecs)
 
@@ -116,7 +117,37 @@
                                      (component (make-cmp-parent)))
                                  (add-ecs-component component entity)
                                  (add-ecs-component component entity))
-                               'simple-error)))))
+                               'simple-error))))
+  (subtest
+      "Test delete-ecs-component-type"
+    (with-modify-env
+      (with-prove-in-both ()
+        (let ((ent1 (make-sample-entity))
+              (ent2 (make-sample-entity)))
+          (register-ecs-system "sys1" (make-sys-test1))
+          ;; registered to sys1
+          (add-ecs-entity ent1)
+          (add-ecs-component-list
+           ent1
+           (make-cmp-parent)
+           (make-cmp-independent))
+          (add-ecs-entity ent2)
+          (add-ecs-component-list
+           ent2
+           (make-cmp-parent)
+           (make-cmp-independent))
+          ;; execute (counter +2)
+          (ecs-main)
+          ;; execute (counter +1)
+          (delete-ecs-component-type 'cmp-parent ent1)
+          (ok (get-ecs-component 'cmp-independent ent1))
+          (ok (not (get-ecs-component 'cmp-parent ent1)))
+          (is *test-counter* 2)
+          (ecs-main)
+          (is *test-counter* 3))))
+    (with-prove-in-both ()
+      (is-error (delete-ecs-component-type 'cmp-parent 12)
+                'type-error))))
 
 (subtest
     "Test entity funcs"
