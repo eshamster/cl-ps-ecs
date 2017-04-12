@@ -22,7 +22,7 @@
            :find-the-entity
            :add-ecs-component
            :add-ecs-component-list
-           :remove-ecs-component
+           :delete-ecs-component-type
 
            :add-entity-tag
            :has-entity-tag
@@ -210,6 +210,9 @@
 
 ;; entity system
 
+(defun.ps+ is-registered-entity (entity system)
+  (find entity (ecs-system-target-entities system)))
+
 (defun.ps+ is-target-entity (entity system)
   (includes-all-component-types (ecs-system-target-component-types system)
                                 (ecs-entity-components entity)))
@@ -229,11 +232,20 @@
   (do-ecs-systems system
     (push-entity-to-system-if-needed entity system)))
 
-(defun.ps+ delete-entity-from-system-if-needed (entity system)
-  (when (is-target-entity entity system)
+(defun.ps+ delete-entity-from-system-if-registered (entity system)
+  (when (is-registered-entity entity system)
     (funcall (ecs-system-delete-entity-hook system) entity)
     (setf (ecs-system-target-entities system)
           (remove entity (ecs-system-target-entities system)))))
+
+(defun.ps+ delete-entity-from-all-systems (entity)
+  (do-ecs-systems system
+    (delete-entity-from-system-if-registered entity system)))
+
+(defun.ps+ delete-entity-from-no-longer-belong-systems (entity)
+  (do-ecs-systems system
+    (unless (is-target-entity entity system)
+      (delete-entity-from-system-if-registered entity system))))
 
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
@@ -280,8 +292,7 @@
         (setf *entity-list*
               (remove entity *entity-list*))))
   (do-ecs-entity-tree (target entity)
-    (do-ecs-systems system
-      (delete-entity-from-system-if-needed target system))))
+    (delete-entity-from-all-systems target)))
 
 ;; [WIP]
 (defun.ps+ move-ecs-entity (entity new-parent)
@@ -321,6 +332,12 @@
   "Add a component to an entity. If the entity is added to the environment, "
   (add-ecs-component-list entity component))
 
-;; [WIP]
-(defun.ps+ delete-ecs-component (component entity))
+(defun.ps+ delete-ecs-component-type (component-type entity)
+  "Delete a component whose type is component-type"
+  (check-type entity ecs-entity)
+  (setf (ecs-entity-components entity)
+        (remove-if (lambda (component)
+                     (typep component component-type))
+                   (ecs-entity-components entity)))
+  (delete-entity-from-no-longer-belong-systems entity))
 
