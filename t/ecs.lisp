@@ -12,7 +12,7 @@
                 :is-list.ps+))
 (in-package :cl-ps-ecs-test.ecs)
 
-(plan 5)
+(plan 6)
 
 (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
 
@@ -490,6 +490,23 @@
           (is *test-counter* 101)
           (delete-ecs-entity ent-not-target)
           (is *test-counter* 101))))))
+
+(subtest
+    "Test register-next-frame-func"
+  (with-prove-in-both ()
+    (with-modify-env
+      (let ((counter 0))
+        ;; Check if 2 functions are executed in order of registration
+        (register-next-frame-func #'(lambda () (incf counter)))
+        (register-next-frame-func #'(lambda () (setf counter (* 2 counter))))
+        (is counter 0)
+        (incf counter 10)
+        (is counter 10)
+        (ecs-main)
+        (is counter 22)
+        ;; Check if registered functions are cleared after execution
+        (ecs-main)
+        (is counter 22)))))
 
 (subtest
     "Test do-ecs-components-of-entity"
