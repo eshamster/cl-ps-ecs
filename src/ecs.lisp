@@ -42,6 +42,7 @@
            
            :do-ecs-components-of-entity
            :register-ecs-system
+           :register-next-frame-func
            :ecs-main
            :clean-ecs-env)
   (:import-from :alexandria
@@ -67,8 +68,6 @@
   )
 
 (defvar.ps+ *entity-list* '())
-(defvar.ps+ *entity-list-buffer* '()
-  "The list of (entity parent) pairs. This is added to by add-ecs-entity-to-buffer.")
 
 (defmacro.ps+ do-ecs-entity-tree-list ((var entity-tree-list) &body body)
   (with-gensyms (rec entity-list)
@@ -189,8 +188,21 @@
                  (,(cadr var) (cadr ,pair)))
              ,@body)))))
 
+(defvar.ps+ *next-frame-func-list* '())
+
+(defun.ps+ register-next-frame-func (func)
+  "Register a function with no argument that is executed in first of next frame.
+Note: Some functions (Ex. add or delete resource) can cause troublesome problems if it is executed in frame. Use this wrapper when executing such functions."
+  (push func *next-frame-func-list*))
+
+(defun.ps+ execute-all-registered-funcs ()
+  ;; Reverse to execute functions in order of registration.
+  (dolist (func (reverse *next-frame-func-list*))
+    (funcall func))
+  (setf *next-frame-func-list* '()))
+
 (defun.ps+ ecs-main ()
-  (flush-ecs-entities-buffer)
+  (execute-all-registered-funcs)
   (do-ecs-systems system
     (when (ecs-system-enable system)
       (funcall (ecs-system-process-all system) system)
@@ -220,6 +232,7 @@
 ;; entity component system
 
 (defun.ps+ clean-ecs-env ()
+  (setf *next-frame-func-list* '())
   (clean-ecs-entities)
   (clean-ecs-systems))
 
@@ -267,15 +280,8 @@
 
 (defun.ps+ add-ecs-entity-to-buffer (entity &optional (parent nil))
   "Add the entity to the buffer of the global list. They are added in the loop, ecs-main. This is useful for adding entities in do-ecs-entities loop."
-  ;;--- TODO: Error check for arguments. (Lately these are checked in add-ecs-entity).
-  (push (list entity parent) *entity-list-buffer*))
-
-(defun.ps+ flush-ecs-entities-buffer ()
-  "Add all entities in the buffer."
-  ;; The 'reverse' is required to add entities in the order of addition. Otherwize, the relationships between a parent and its children cannot be properly processed.
-  (dolist (pair (reverse *entity-list-buffer*))
-    (add-ecs-entity (car pair) (cadr pair)))
-  (setf *entity-list-buffer* '()))
+  (register-next-frame-func
+   #'(lambda () (add-ecs-entity entity parent))))
 
 (defun.ps+ delete-ecs-entity (entity)
   "Remove an entity from global *entity-list* with its descendants."
