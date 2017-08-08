@@ -12,7 +12,7 @@
                 :is-list.ps+))
 (in-package :cl-ps-ecs-test.ecs)
 
-(plan 6)
+(plan 7)
 
 (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
 
@@ -507,6 +507,32 @@
         ;; Check if registered functions are cleared after execution
         (ecs-main)
         (is counter 22)))))
+
+(subtest
+    "Test register-func-with-pred"
+  (with-prove-in-both ()
+    (with-modify-env
+      (let ((counter 0))
+        (flet ((make-adder (n)
+                 (lambda () (incf counter n)))
+               (make-pred (border)
+                 (lambda () (>= counter border))))
+          ;; func1
+          (register-func-with-pred (make-adder 10) (make-pred -1))
+          ;; func2
+          (register-func-with-pred (make-adder 100) (make-pred 10))
+          ;; func3
+          (register-func-with-pred (make-adder 1000) (make-pred 999999)
+                                   :timeout-frame 3)
+          (is counter 0)
+          ;; only func1 should be invoked (and removed)
+          (ecs-main)
+          (is counter 10)
+          ;; only func2 should be invokded
+          (ecs-main)
+          (is counter 110)
+          ;; should be timeout error because of func3
+          (is-error (ecs-main) 'simple-error))))))
 
 (subtest
     "Test do-ecs-components-of-entity"
