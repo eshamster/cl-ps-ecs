@@ -39,5 +39,6 @@
            :do-ecs-components-of-entity           
            :register-ecs-system
            :register-next-frame-func
+           :register-func-with-pred
            :ecs-main))
 (in-package :cl-ps-ecs)

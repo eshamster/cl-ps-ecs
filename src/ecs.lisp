@@ -43,6 +43,7 @@
            :do-ecs-components-of-entity
            :register-ecs-system
            :register-next-frame-func
+           :register-func-with-pred
            :ecs-main
            :clean-ecs-env)
   (:import-from :alexandria
@@ -195,6 +196,33 @@
 Note: Some functions (Ex. add or delete resource) can cause troublesome problems if it is executed in frame. Use this wrapper when executing such functions."
   (push func *next-frame-func-list*))
 
+(defstruct.ps+ func-with-pred func pred rest-timeout-frame name)
+
+(defvar.ps+ *func-with-pred-list* '())
+
+(defun.ps+ execute-all-registered-funcs-with-pred ()
+  (let ((executed-list '()))
+    (dolist (func-with-pred *func-with-pred-list*)
+      (with-slots (func pred rest-timeout-frame name) func-with-pred
+        (if (funcall pred)
+            (progn (funcall func)
+                   (push func-with-pred executed-list))
+            (when (> rest-timeout-frame 0)
+              (decf rest-timeout-frame)
+              (when (= rest-timeout-frame 0)
+                (error "The function with predication \"~A\" ends with timeout" name))))))
+    (dolist (executed executed-list)
+      (setf *func-with-pred-list*
+            (remove executed *func-with-pred-list*)))))
+
+(defun.ps+ register-func-with-pred (func pred &key (timeout-frame -1) (name ""))
+  "Register a function that will be executed when the predication function return true in first of a frame.
+The name is not used in the process but it is useful for debug."
+  (push (make-func-with-pred :func func :pred pred
+                             :rest-timeout-frame timeout-frame
+                             :name name)
+        *func-with-pred-list*))
+
 (defun.ps+ execute-all-registered-funcs ()
   ;; Reverse to execute functions in order of registration.
   (dolist (func (reverse *next-frame-func-list*))
@@ -203,6 +231,7 @@ Note: Some functions (Ex. add or delete resource) can cause troublesome problems
 
 (defun.ps+ ecs-main ()
   (execute-all-registered-funcs)
+  (execute-all-registered-funcs-with-pred)
   (do-ecs-systems system
     (when (ecs-system-enable system)
       (funcall (ecs-system-process-all system) system)
@@ -233,6 +262,7 @@ Note: Some functions (Ex. add or delete resource) can cause troublesome problems
 
 (defun.ps+ clean-ecs-env ()
   (setf *next-frame-func-list* '())
+  (setf *func-with-pred-list* '())
   (clean-ecs-entities)
   (clean-ecs-systems))
 
