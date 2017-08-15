@@ -18,7 +18,8 @@
   :license "LLGPL"
   :depends-on (:parenscript
                :alexandria
-               :ps-experiment)
+               :ps-experiment
+               :cl-reexport)
   :components ((:module "src"
                 :serial t
                 :components
