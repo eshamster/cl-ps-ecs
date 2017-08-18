@@ -18,12 +18,14 @@
   :license "LLGPL"
   :depends-on (:parenscript
                :alexandria
-               :ps-experiment)
+               :ps-experiment
+               :cl-reexport)
   :components ((:module "src"
                 :serial t
                 :components
                 ((:file "utils")
-                 (:file "ecs") 
+                 (:file "ecs")
+                 (:file "frame-promise")
                  (:file "cl-ps-ecs"))))
   :description "[WIP] Entity-Component-System written by ParenScript (Common Lisp) "
   :long-description

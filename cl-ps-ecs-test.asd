@@ -21,6 +21,7 @@
                 :components
                 ((:test-file "utils")
                  (:test-file "ecs")
+                 (:test-file "frame-promise")
                  (:test-file "cl-ps-ecs"))))
   :description "Test system for cl-ps-ecs"
 
