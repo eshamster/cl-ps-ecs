@@ -43,6 +43,7 @@
            :do-ecs-components-of-entity
            :register-ecs-system
            :register-next-frame-func
+           :register-nframes-after-func
            :register-func-with-pred
            :ecs-main
            :clean-ecs-env)
@@ -222,6 +223,15 @@ The name is not used in the process but it is useful for debug."
                              :rest-timeout-frame timeout-frame
                              :name name)
         *func-with-pred-list*))
+
+(defun.ps+ register-nframes-after-func (func delayed-frames)
+  "Register a function with no argument that is executed N frames after.
+Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, executed in its next after next frame."
+  (let ((rest-time delayed-frames))
+    (register-func-with-pred func
+                             (lambda ()
+                               (decf rest-time)
+                               (<= rest-time 0)))))
 
 (defun.ps+ execute-all-registered-funcs ()
   ;; Reverse to execute functions in order of registration.

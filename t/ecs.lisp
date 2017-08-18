@@ -509,6 +509,31 @@
         (is counter 22)))))
 
 (subtest
+    "Test register-nframes-after-func"
+  (with-prove-in-both ()
+    (with-modify-env
+      (let ((counter 0))
+        (flet ((make-adder (n)
+                 (lambda () (incf counter n)))
+               (make-pred (border)
+                 (lambda () (>= counter border))))
+          ;; func1-1, 1-2
+          (register-nframes-after-func (make-adder 1) 0)
+          (register-nframes-after-func (make-adder 10) 1)
+          ;; func2
+          (register-nframes-after-func (make-adder 100) 3)
+          (is counter 0)
+          ;; only func1-1 and 1-2 should be invoked (and removed)
+          (ecs-main)
+          (is counter 11)
+          ;; nothing should be invoked
+          (ecs-main)
+          (is counter 11)
+          ;; only func2 should be invokded
+          (ecs-main)
+          (is counter 111))))))
+
+(subtest
     "Test register-func-with-pred"
   (with-prove-in-both ()
     (with-modify-env
