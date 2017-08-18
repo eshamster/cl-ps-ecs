@@ -203,7 +203,7 @@ Note: Some functions (Ex. add or delete resource) can cause troublesome problems
 
 (defun.ps+ execute-all-registered-funcs-with-pred ()
   (let ((executed-list '()))
-    (dolist (func-with-pred *func-with-pred-list*)
+    (dolist (func-with-pred (reverse *func-with-pred-list*))
       (with-slots (func pred rest-timeout-frame name) func-with-pred
         (if (funcall pred)
             (progn (funcall func)

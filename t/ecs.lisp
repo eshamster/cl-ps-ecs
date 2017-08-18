@@ -543,17 +543,17 @@
                (make-pred (border)
                  (lambda () (>= counter border))))
           ;; func1
-          (register-func-with-pred (make-adder 10) (make-pred -1))
-          ;; func2
           (register-func-with-pred (make-adder 100) (make-pred 10))
+          ;; func2
+          (register-func-with-pred (make-adder 10) (make-pred -1))
           ;; func3
           (register-func-with-pred (make-adder 1000) (make-pred 999999)
                                    :timeout-frame 3)
           (is counter 0)
-          ;; only func1 should be invoked (and removed)
+          ;; only func2 should be invoked (and removed)
           (ecs-main)
           (is counter 10)
-          ;; only func2 should be invokded
+          ;; only func1 should be invokded
           (ecs-main)
           (is counter 110)
           ;; should be timeout error because of func3
