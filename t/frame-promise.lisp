@@ -47,7 +47,17 @@
                             (lambda (value) (incf counter value)))
         (is counter 11)
         (ecs-main)
-        (is counter 111)))))
+        (is counter 111))
+      ;; Test timeout
+      (let ((promise (init-frame-promise
+                      (lambda (resolve)
+                        (register-nframes-after-func
+                         (lambda () (funcall resolve t)) 999)))))
+        (frame-promise-then promise
+                            (lambda (value) value)
+                            :timeout-frame 2)
+        (ecs-main)
+        (is-error (ecs-main) 'simple-error)))))
 
 (subtest
     "Test frame-promise-all"
@@ -93,6 +103,16 @@
                             (lambda (value) (incf counter value)))
         (is counter 800)
         (ecs-main)
-        (is counter 1800)))))
+        (is counter 1800))
+      ;; Test timeout
+      (let ((promise (init-frame-promise
+                      (lambda (resolve)
+                        (register-nframes-after-func
+                         (lambda () (funcall resolve t)) 999)))))
+        (frame-promise-all (list promise)
+                           (lambda (value-list) value-list)
+                            :timeout-frame 2)
+        (ecs-main)
+        (is-error (ecs-main) 'simple-error)))))
 
 (finalize)
