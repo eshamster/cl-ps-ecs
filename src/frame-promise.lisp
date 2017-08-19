@@ -30,7 +30,7 @@
              (lambda (value) (frame-promise-resolve promise value)))
     promise))
 
-(defun.ps+ frame-promise-then (promise callback)
+(defun.ps+ frame-promise-then (promise callback &key (timeout-frame -1))
   "Register the callback as a following promise of the promise. The callback is invoked after the promise is resolved. Then, it accepts a return value of the promise."
   (let ((promise-new (make-frame-promise)))
     (register-func-with-pred
@@ -39,10 +39,11 @@
         promise-new
         (funcall callback (frame-promise-result promise))))
      (lambda ()
-       (frame-promise-resolved-p promise)))
+       (frame-promise-resolved-p promise))
+     :timeout-frame timeout-frame)
     promise-new))
 
-(defun.ps+ frame-promise-all (promise-list callback)
+(defun.ps+ frame-promise-all (promise-list callback &key (timeout-frame -1))
   "Register the callback as a following promise of the promise list. The callback is invoked after all of the promise are resolved. Then, it accepts a return value list of the promises."
   (let ((promise-new (make-frame-promise)))
     (register-func-with-pred
@@ -54,5 +55,6 @@
                          promise-list))))
      (lambda ()
        (every (lambda (promise) (not (null (frame-promise-resolved-p promise))))
-              promise-list)))
+              promise-list))
+     :timeout-frame timeout-frame)
     promise-new))
