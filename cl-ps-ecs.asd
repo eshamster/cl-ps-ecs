@@ -24,8 +24,9 @@
                 :serial t
                 :components
                 ((:file "utils")
-                 (:file "ecs")
+                 (:file "basic-process")
                  (:file "frame-promise")
+                 (:file "ecs")
                  (:file "cl-ps-ecs"))))
   :description "[WIP] Entity-Component-System written by ParenScript (Common Lisp) "
   :long-description

@@ -3,7 +3,8 @@
   (:use :cl
         :parenscript
         :ps-experiment
-        :cl-ps-ecs.utils)
+        :cl-ps-ecs.utils
+        :cl-ps-ecs.basic-process)
   (:export :includes-all-component-types
            :ecs-component
            
@@ -42,9 +43,6 @@
            
            :do-ecs-components-of-entity
            :register-ecs-system
-           :register-next-frame-func
-           :register-nframes-after-func
-           :register-func-with-pred
            :ecs-main
            :clean-ecs-env)
   (:import-from :alexandria
@@ -190,58 +188,8 @@
                  (,(cadr var) (cadr ,pair)))
              ,@body)))))
 
-(defvar.ps+ *next-frame-func-list* '())
-
-(defun.ps+ register-next-frame-func (func)
-  "Register a function with no argument that is executed in first of next frame.
-Note: Some functions (Ex. add or delete resource) can cause troublesome problems if it is executed in frame. Use this wrapper when executing such functions."
-  (push func *next-frame-func-list*))
-
-(defstruct.ps+ func-with-pred func pred rest-timeout-frame name)
-
-(defvar.ps+ *func-with-pred-list* '())
-
-(defun.ps+ execute-all-registered-funcs-with-pred ()
-  (let ((executed-list '()))
-    (dolist (func-with-pred (reverse *func-with-pred-list*))
-      (with-slots (func pred rest-timeout-frame name) func-with-pred
-        (if (funcall pred)
-            (progn (funcall func)
-                   (push func-with-pred executed-list))
-            (when (> rest-timeout-frame 0)
-              (decf rest-timeout-frame)
-              (when (= rest-timeout-frame 0)
-                (error "The function with predication \"~A\" ends with timeout" name))))))
-    (dolist (executed executed-list)
-      (setf *func-with-pred-list*
-            (remove executed *func-with-pred-list*)))))
-
-(defun.ps+ register-func-with-pred (func pred &key (timeout-frame -1) (name ""))
-  "Register a function that will be executed when the predication function return true in first of a frame.
-The name is not used in the process but it is useful for debug."
-  (push (make-func-with-pred :func func :pred pred
-                             :rest-timeout-frame timeout-frame
-                             :name name)
-        *func-with-pred-list*))
-
-(defun.ps+ register-nframes-after-func (func delayed-frames)
-  "Register a function with no argument that is executed N frames after.
-Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, executed in its next after next frame."
-  (let ((rest-time delayed-frames))
-    (register-func-with-pred func
-                             (lambda ()
-                               (decf rest-time)
-                               (<= rest-time 0)))))
-
-(defun.ps+ execute-all-registered-funcs ()
-  ;; Reverse to execute functions in order of registration.
-  (dolist (func (reverse *next-frame-func-list*))
-    (funcall func))
-  (setf *next-frame-func-list* '()))
-
 (defun.ps+ ecs-main ()
-  (execute-all-registered-funcs)
-  (execute-all-registered-funcs-with-pred)
+  (execute-ecs-basic-process)
   (do-ecs-systems system
     (when (ecs-system-enable system)
       (funcall (ecs-system-process-all system) system)
@@ -271,8 +219,7 @@ Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, execute
 ;; entity component system
 
 (defun.ps+ clean-ecs-env ()
-  (setf *next-frame-func-list* '())
-  (setf *func-with-pred-list* '())
+  (clean-ecs-basic-process)
   (clean-ecs-entities)
   (clean-ecs-systems))
 

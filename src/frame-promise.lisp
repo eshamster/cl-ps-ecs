@@ -3,7 +3,7 @@
   (:use :cl
         :parenscript
         :ps-experiment
-        :cl-ps-ecs.ecs)
+        :cl-ps-ecs.basic-process)
   (:export :frame-promise
            :frame-promise-p
            :init-frame-promise

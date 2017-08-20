@@ -20,8 +20,9 @@
   :components ((:module "t"
                 :components
                 ((:test-file "utils")
-                 (:test-file "ecs")
+                 (:test-file "basic-process")
                  (:test-file "frame-promise")
+                 (:test-file "ecs")
                  (:test-file "cl-ps-ecs"))))
   :description "Test system for cl-ps-ecs"
 
