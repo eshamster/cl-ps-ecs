@@ -20,6 +20,7 @@
   :components ((:module "t"
                 :components
                 ((:test-file "utils")
+                 (:test-file "flat-tree")
                  (:test-file "basic-process")
                  (:test-file "frame-promise")
                  (:test-file "ecs")

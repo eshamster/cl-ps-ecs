@@ -24,6 +24,7 @@
                 :serial t
                 :components
                 ((:file "utils")
+                 (:file "flat-tree")
                  (:file "basic-process")
                  (:file "frame-promise")
                  (:file "ecs")

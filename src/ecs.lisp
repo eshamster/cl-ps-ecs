@@ -51,9 +51,7 @@
 (in-package :cl-ps-ecs.ecs)
 
 ;; ---- component ---- ;;
-;; This has dummy data to avoid error in cl-js:js-run with Clozure CL
-(defstruct.ps+ ecs-component
-    dummy)
+(defstruct.ps+ ecs-component (tags '()))
 
 ;; ---- entity ---- ;;
 (defvar.ps+ *entity-id-counter* 0)
