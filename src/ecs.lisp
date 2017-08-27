@@ -4,7 +4,8 @@
         :parenscript
         :ps-experiment
         :cl-ps-ecs.utils
-        :cl-ps-ecs.basic-process)
+        :cl-ps-ecs.basic-process
+        :cl-ps-ecs.flat-tree)
   (:export :includes-all-component-types
            :ecs-component
            
@@ -56,34 +57,23 @@
 ;; ---- entity ---- ;;
 (defvar.ps+ *entity-id-counter* 0)
 
-(defstruct.ps+ ecs-entity
+(defstruct.ps+ (ecs-entity (:include flat-tree-node))
   (id (incf *entity-id-counter*))
   (tags '())
-  (components '())
-  parent
-  (children '())
-  (registerp nil) ;; This is used only in this library.
-  )
+  (components '()))
 
 (defvar.ps+ *entity-list* '())
 
-(defmacro.ps+ do-ecs-entity-tree-list ((var entity-tree-list) &body body)
-  (with-gensyms (rec entity-list)
-    `(labels ((,rec (,entity-list)
-                (dolist (,var ,entity-list)
-                  ,@body
-                  (,rec (ecs-entity-children ,var)))))
-       (,rec ,entity-tree-list))))
-
 (defmacro.ps+ do-ecs-entity-tree ((var top-entity) &body body)
-  `(do-ecs-entity-tree-list (,var (list ,top-entity))
+  `(do-flat-tree (,var ,top-entity)
      ,@body))
 
 (defmacro.ps+ do-ecs-entities (var &body body)
-  `(do-ecs-entity-tree-list (,var *entity-list*)
+  `(do-flat-tree-list (,var *entity-list*)
      ,@body))
 
 (defun.ps+ clean-ecs-entities ()
+  ;; TODO: Replace implementation by clean-flat-tree-list (not implemented yet)
   (do-ecs-entities entity
     (setf (ecs-entity-registerp entity) nil))
   (setf *entity-list* '()))
@@ -248,17 +238,9 @@
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
   (check-type entity ecs-entity)
-  (when (find-the-entity entity)
-    (error "The entity is already registered."))
   (when parent
     (check-type parent ecs-entity))
-  (unless (or (null parent) (find-the-entity parent))
-    (error "The parent is not registered"))
-  (setf (ecs-entity-registerp entity) t)
-  (if (null parent)
-      (push entity *entity-list*)
-      (progn (setf (ecs-entity-parent entity) parent)
-             (push entity (ecs-entity-children parent))))
+  (push-flat-tree-node entity *entity-list* parent)
   (do-ecs-entity-tree (target entity)
     (push-entity-to-all-target-system target))
   entity)
@@ -271,17 +253,7 @@
 (defun.ps+ delete-ecs-entity (entity)
   "Remove an entity from global *entity-list* with its descendants."
   (check-type entity ecs-entity)
-  (unless (find-the-entity entity)
-    (error "The entity is not registered"))
-  (do-ecs-entity-tree (node entity)
-    (setf (ecs-entity-registerp node) nil))
-  (let ((parent (ecs-entity-parent entity)))
-    (if parent
-        (progn (setf (ecs-entity-children parent)
-                     (remove entity (ecs-entity-children parent)))
-               (setf (ecs-entity-parent entity) nil))
-        (setf *entity-list*
-              (remove entity *entity-list*))))
+  (setf *entity-list* (delete-flat-tree-node entity *entity-list*))
   (do-ecs-entity-tree (target entity)
     (delete-entity-from-all-systems target)))
 
