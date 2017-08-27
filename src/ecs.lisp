@@ -52,7 +52,7 @@
 (in-package :cl-ps-ecs.ecs)
 
 ;; ---- component ---- ;;
-(defstruct.ps+ ecs-component (tags '()))
+(defstruct.ps+ (ecs-component (:include flat-tree-node)))
 
 ;; ---- entity ---- ;;
 (defvar.ps+ *entity-id-counter* 0)
@@ -281,26 +281,34 @@
   (when (find component (ecs-entity-components entity))
     (error "The component is already added to the entity.")))
 
-(defun.ps+ add-ecs-component-list (entity &rest component-list)
+(defun.ps+ add-ecs-component-list-impl (entity parent-component component-list)
   "Add components to an entity. If the entity is added to the environment, "
   (check-type entity ecs-entity)
+  (when parent-component
+    (check-type parent-component ecs-component))
   (dolist (component component-list)
     (check-type component ecs-component)
     (check-component-uniqueness component entity)
-    (push component (ecs-entity-components entity)))
+    (push-flat-tree-node component (ecs-entity-components entity)
+                         parent-component))
   (when (find-the-entity entity)
     (push-entity-to-all-target-system entity)))
 
-(defun.ps+ add-ecs-component (component entity)
+(defun.ps+ add-ecs-component-list (entity &rest component-list)
+  "Add components to an entity. If the entity is added to the environment, "
+  (add-ecs-component-list-impl entity nil component-list))
+
+(defun.ps+ add-ecs-component (component entity &optional parent-component)
   "Add a component to an entity. If the entity is added to the environment, "
-  (add-ecs-component-list entity component))
+  (add-ecs-component-list-impl entity parent-component (list component)))
 
 (defun.ps+ delete-ecs-component-type (component-type entity)
   "Delete a component whose type is component-type"
   (check-type entity ecs-entity)
-  (setf (ecs-entity-components entity)
-        (remove-if (lambda (component)
-                     (typep component component-type))
-                   (ecs-entity-components entity)))
+  (with-slots (components) entity
+    (setf components
+          (delete-flat-tree-node-if
+           (lambda (a-component)
+             (typep a-component component-type))
+           components)))
   (delete-entity-from-no-longer-belong-systems entity))
-

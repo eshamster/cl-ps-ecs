@@ -79,6 +79,10 @@
       (incf count))
     count))
 
+(defun.ps+ count-components (entity)
+  (check-type entity ecs-entity)
+  (length (cl-ps-ecs.ecs::ecs-entity-components entity)))
+
 ;; ---- Start test ---- ;;
 
 (subtest
@@ -146,6 +150,20 @@
           (is *test-counter* 2)
           (ecs-main)
           (is *test-counter* 3))))
+    (subtest
+        "Test recursive deletion"
+      (with-prove-in-both ()
+        (with-modify-env
+          (let ((ent (make-sample-entity))
+                (parent-cmp (make-cmp-parent))
+                (child-cmp (make-cmp-independent))
+                (other-cmp (make-cmp-independent)))
+            (add-ecs-component-list ent parent-cmp other-cmp)
+            (add-ecs-component child-cmp ent parent-cmp)
+            (ecs-main)
+            (is (count-components ent) 3)
+            (delete-ecs-component-type 'cmp-parent ent)
+            (is (count-components ent) 1)))))
     (with-prove-in-both ()
       (is-error (delete-ecs-component-type 'cmp-parent 12)
                 'type-error))))
