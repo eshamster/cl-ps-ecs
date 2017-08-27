@@ -15,7 +15,8 @@
            :push-flat-tree-node
            :do-flat-tree
            :do-flat-tree-list
-           :delete-flat-tree-node))
+           :delete-flat-tree-node
+           :delete-flat-tree-node-if))
 (in-package :cl-ps-ecs.flat-tree)
 
 ;; This package is internally used for ecs-entity and ecs-component.
@@ -92,3 +93,18 @@ Because this function destruct the place-lst, caller should overwrite place-lst 
                    removed-lst)
                  lst)))
     (rec node place-lst)))
+
+(defun.ps+ delete-flat-tree-node-if (predicate place-lst)
+  "Delete a flat-tree node that becomes true in the predicate from the place-lst.
+Because this function destruct the place-lst, caller should overwrite place-lst by new returned list.
+Note: When parent and child are deleted at the same time, it is not guaranteed that their relationship is kept or not."
+  (let ((delete-lst '()))
+    (do-flat-tree-list (node place-lst)
+      (when (funcall predicate node)
+        (push node delete-lst)))
+    ;; Note: Child nodes can be recursively deleted when its parent is deleted,
+    ;;       so registerp should be checked before deletion.
+    (dolist (node delete-lst)
+      (when (flat-tree-node-registerp node)
+        (setf place-lst (delete-flat-tree-node node place-lst)))))
+  place-lst)

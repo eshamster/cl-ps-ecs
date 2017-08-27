@@ -8,7 +8,7 @@
         :ps-experiment-test.test-utils))
 (in-package :cl-ps-ecs-test.flat-tree)
 
-(plan 6)
+(plan 7)
 
 (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
 
@@ -157,6 +157,33 @@
           (ok (is-flat-tree lst :count 0))
           (is-error (setf lst (delete-flat-tree-node node lst))
                     'simple-error))))))
+
+(subtest
+    "Test delete-flat-tree-node-if"
+  (with-prove-in-both ()
+    (let ((parent (make-flat-tree-node))
+          (child1 (make-flat-tree-node))
+          (child2 (make-flat-tree-node))
+          (g-child (make-flat-tree-node))
+          (lst '()))
+      (print "  --- prepare ---")
+      (push-flat-tree-node (make-flat-tree-node) lst)
+      (push-flat-tree-node parent lst)
+      (push-flat-tree-node child1 lst parent)
+      (push-flat-tree-node child2 lst parent)
+      (push-flat-tree-node g-child lst child1)
+      (ok (is-flat-tree lst :count 5))
+      (ok (is-parent-node child1 parent))
+      (ok (is-parent-node child2 parent))
+      (ok (is-parent-node g-child child1))
+
+      (print "  --- delete ---")
+      (setf lst
+            (delete-flat-tree-node-if (lambda (node)
+                                        (check-type node flat-tree-node)
+                                        (is-parent-node node parent))
+                                      lst))
+      (ok (is-flat-tree lst :count 2)))))
 
 (subtest
     "Test push and delete"
