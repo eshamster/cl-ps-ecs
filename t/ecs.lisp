@@ -12,7 +12,7 @@
                 :is-list.ps+))
 (in-package :cl-ps-ecs-test.ecs)
 
-(plan 7)
+(plan 5)
 
 (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
 
@@ -78,6 +78,10 @@
     (do-ecs-entities entity
       (incf count))
     count))
+
+(defun.ps+ count-components (entity)
+  (check-type entity ecs-entity)
+  (length (cl-ps-ecs.ecs::ecs-entity-components entity)))
 
 ;; ---- Start test ---- ;;
 
@@ -146,6 +150,20 @@
           (is *test-counter* 2)
           (ecs-main)
           (is *test-counter* 3))))
+    (subtest
+        "Test recursive deletion"
+      (with-prove-in-both ()
+        (with-modify-env
+          (let ((ent (make-sample-entity))
+                (parent-cmp (make-cmp-parent))
+                (child-cmp (make-cmp-independent))
+                (other-cmp (make-cmp-independent)))
+            (add-ecs-component-list ent parent-cmp other-cmp)
+            (add-ecs-component child-cmp ent parent-cmp)
+            (ecs-main)
+            (is (count-components ent) 3)
+            (delete-ecs-component-type 'cmp-parent ent)
+            (is (count-components ent) 1)))))
     (with-prove-in-both ()
       (is-error (delete-ecs-component-type 'cmp-parent 12)
                 'type-error))))
@@ -490,74 +508,6 @@
           (is *test-counter* 101)
           (delete-ecs-entity ent-not-target)
           (is *test-counter* 101))))))
-
-(subtest
-    "Test register-next-frame-func"
-  (with-prove-in-both ()
-    (with-modify-env
-      (let ((counter 0))
-        ;; Check if 2 functions are executed in order of registration
-        (register-next-frame-func #'(lambda () (incf counter)))
-        (register-next-frame-func #'(lambda () (setf counter (* 2 counter))))
-        (is counter 0)
-        (incf counter 10)
-        (is counter 10)
-        (ecs-main)
-        (is counter 22)
-        ;; Check if registered functions are cleared after execution
-        (ecs-main)
-        (is counter 22)))))
-
-(subtest
-    "Test register-nframes-after-func"
-  (with-prove-in-both ()
-    (with-modify-env
-      (let ((counter 0))
-        (flet ((make-adder (n)
-                 (lambda () (incf counter n)))
-               (make-pred (border)
-                 (lambda () (>= counter border))))
-          ;; func1-1, 1-2
-          (register-nframes-after-func (make-adder 1) 0)
-          (register-nframes-after-func (make-adder 10) 1)
-          ;; func2
-          (register-nframes-after-func (make-adder 100) 3)
-          (is counter 0)
-          ;; only func1-1 and 1-2 should be invoked (and removed)
-          (ecs-main)
-          (is counter 11)
-          ;; nothing should be invoked
-          (ecs-main)
-          (is counter 11)
-          ;; only func2 should be invokded
-          (ecs-main)
-          (is counter 111))))))
-
-(subtest
-    "Test register-func-with-pred"
-  (with-prove-in-both ()
-    (with-modify-env
-      (let ((counter 0))
-        (flet ((make-adder (n)
-                 (lambda () (incf counter n)))
-               (make-pred (border)
-                 (lambda () (>= counter border))))
-          ;; func1
-          (register-func-with-pred (make-adder 100) (make-pred 10))
-          ;; func2
-          (register-func-with-pred (make-adder 10) (make-pred -1))
-          ;; func3
-          (register-func-with-pred (make-adder 1000) (make-pred 999999)
-                                   :timeout-frame 3)
-          (is counter 0)
-          ;; only func2 should be invoked (and removed)
-          (ecs-main)
-          (is counter 10)
-          ;; only func1 should be invokded
-          (ecs-main)
-          (is counter 110)
-          ;; should be timeout error because of func3
-          (is-error (ecs-main) 'simple-error))))))
 
 (subtest
     "Test do-ecs-components-of-entity"

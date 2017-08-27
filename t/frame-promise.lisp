@@ -1,14 +1,10 @@
 (in-package :cl-user)
 (defpackage cl-ps-ecs-test.frame-promise
   (:use :cl
-        :cl-ps-ecs.frame-promise
+        :cl-ps-ecs
         :parenscript
         :ps-experiment
         :prove)
-  (:import-from :cl-ps-ecs.ecs
-                :clean-ecs-env
-                :ecs-main
-                :register-nframes-after-func)
   (:import-from :ps-experiment-test.test-utils
                 :with-prove-in-both))
 (in-package :cl-ps-ecs-test.frame-promise)

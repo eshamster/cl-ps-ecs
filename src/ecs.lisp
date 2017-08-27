@@ -3,7 +3,9 @@
   (:use :cl
         :parenscript
         :ps-experiment
-        :cl-ps-ecs.utils)
+        :cl-ps-ecs.utils
+        :cl-ps-ecs.basic-process
+        :cl-ps-ecs.flat-tree)
   (:export :includes-all-component-types
            :ecs-component
            
@@ -42,9 +44,6 @@
            
            :do-ecs-components-of-entity
            :register-ecs-system
-           :register-next-frame-func
-           :register-nframes-after-func
-           :register-func-with-pred
            :ecs-main
            :clean-ecs-env)
   (:import-from :alexandria
@@ -53,41 +52,28 @@
 (in-package :cl-ps-ecs.ecs)
 
 ;; ---- component ---- ;;
-;; This has dummy data to avoid error in cl-js:js-run with Clozure CL
-(defstruct.ps+ ecs-component
-    dummy)
+(defstruct.ps+ (ecs-component (:include flat-tree-node)))
 
 ;; ---- entity ---- ;;
 (defvar.ps+ *entity-id-counter* 0)
 
-(defstruct.ps+ ecs-entity
+(defstruct.ps+ (ecs-entity (:include flat-tree-node))
   (id (incf *entity-id-counter*))
   (tags '())
-  (components '())
-  parent
-  (children '())
-  (registerp nil) ;; This is used only in this library.
-  )
+  (components '()))
 
 (defvar.ps+ *entity-list* '())
 
-(defmacro.ps+ do-ecs-entity-tree-list ((var entity-tree-list) &body body)
-  (with-gensyms (rec entity-list)
-    `(labels ((,rec (,entity-list)
-                (dolist (,var ,entity-list)
-                  ,@body
-                  (,rec (ecs-entity-children ,var)))))
-       (,rec ,entity-tree-list))))
-
 (defmacro.ps+ do-ecs-entity-tree ((var top-entity) &body body)
-  `(do-ecs-entity-tree-list (,var (list ,top-entity))
+  `(do-flat-tree (,var ,top-entity)
      ,@body))
 
 (defmacro.ps+ do-ecs-entities (var &body body)
-  `(do-ecs-entity-tree-list (,var *entity-list*)
+  `(do-flat-tree-list (,var *entity-list*)
      ,@body))
 
 (defun.ps+ clean-ecs-entities ()
+  ;; TODO: Replace implementation by clean-flat-tree-list (not implemented yet)
   (do-ecs-entities entity
     (setf (ecs-entity-registerp entity) nil))
   (setf *entity-list* '()))
@@ -190,58 +176,8 @@
                  (,(cadr var) (cadr ,pair)))
              ,@body)))))
 
-(defvar.ps+ *next-frame-func-list* '())
-
-(defun.ps+ register-next-frame-func (func)
-  "Register a function with no argument that is executed in first of next frame.
-Note: Some functions (Ex. add or delete resource) can cause troublesome problems if it is executed in frame. Use this wrapper when executing such functions."
-  (push func *next-frame-func-list*))
-
-(defstruct.ps+ func-with-pred func pred rest-timeout-frame name)
-
-(defvar.ps+ *func-with-pred-list* '())
-
-(defun.ps+ execute-all-registered-funcs-with-pred ()
-  (let ((executed-list '()))
-    (dolist (func-with-pred (reverse *func-with-pred-list*))
-      (with-slots (func pred rest-timeout-frame name) func-with-pred
-        (if (funcall pred)
-            (progn (funcall func)
-                   (push func-with-pred executed-list))
-            (when (> rest-timeout-frame 0)
-              (decf rest-timeout-frame)
-              (when (= rest-timeout-frame 0)
-                (error "The function with predication \"~A\" ends with timeout" name))))))
-    (dolist (executed executed-list)
-      (setf *func-with-pred-list*
-            (remove executed *func-with-pred-list*)))))
-
-(defun.ps+ register-func-with-pred (func pred &key (timeout-frame -1) (name ""))
-  "Register a function that will be executed when the predication function return true in first of a frame.
-The name is not used in the process but it is useful for debug."
-  (push (make-func-with-pred :func func :pred pred
-                             :rest-timeout-frame timeout-frame
-                             :name name)
-        *func-with-pred-list*))
-
-(defun.ps+ register-nframes-after-func (func delayed-frames)
-  "Register a function with no argument that is executed N frames after.
-Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, executed in its next after next frame."
-  (let ((rest-time delayed-frames))
-    (register-func-with-pred func
-                             (lambda ()
-                               (decf rest-time)
-                               (<= rest-time 0)))))
-
-(defun.ps+ execute-all-registered-funcs ()
-  ;; Reverse to execute functions in order of registration.
-  (dolist (func (reverse *next-frame-func-list*))
-    (funcall func))
-  (setf *next-frame-func-list* '()))
-
 (defun.ps+ ecs-main ()
-  (execute-all-registered-funcs)
-  (execute-all-registered-funcs-with-pred)
+  (execute-ecs-basic-process)
   (do-ecs-systems system
     (when (ecs-system-enable system)
       (funcall (ecs-system-process-all system) system)
@@ -271,8 +207,7 @@ Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, execute
 ;; entity component system
 
 (defun.ps+ clean-ecs-env ()
-  (setf *next-frame-func-list* '())
-  (setf *func-with-pred-list* '())
+  (clean-ecs-basic-process)
   (clean-ecs-entities)
   (clean-ecs-systems))
 
@@ -303,17 +238,9 @@ Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, execute
 (defun.ps+ add-ecs-entity (entity &optional (parent nil))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
   (check-type entity ecs-entity)
-  (when (find-the-entity entity)
-    (error "The entity is already registered."))
   (when parent
     (check-type parent ecs-entity))
-  (unless (or (null parent) (find-the-entity parent))
-    (error "The parent is not registered"))
-  (setf (ecs-entity-registerp entity) t)
-  (if (null parent)
-      (push entity *entity-list*)
-      (progn (setf (ecs-entity-parent entity) parent)
-             (push entity (ecs-entity-children parent))))
+  (push-flat-tree-node entity *entity-list* parent)
   (do-ecs-entity-tree (target entity)
     (push-entity-to-all-target-system target))
   entity)
@@ -326,17 +253,7 @@ Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, execute
 (defun.ps+ delete-ecs-entity (entity)
   "Remove an entity from global *entity-list* with its descendants."
   (check-type entity ecs-entity)
-  (unless (find-the-entity entity)
-    (error "The entity is not registered"))
-  (do-ecs-entity-tree (node entity)
-    (setf (ecs-entity-registerp node) nil))
-  (let ((parent (ecs-entity-parent entity)))
-    (if parent
-        (progn (setf (ecs-entity-children parent)
-                     (remove entity (ecs-entity-children parent)))
-               (setf (ecs-entity-parent entity) nil))
-        (setf *entity-list*
-              (remove entity *entity-list*))))
+  (setf *entity-list* (delete-flat-tree-node entity *entity-list*))
   (do-ecs-entity-tree (target entity)
     (delete-entity-from-all-systems target)))
 
@@ -364,26 +281,34 @@ Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, execute
   (when (find component (ecs-entity-components entity))
     (error "The component is already added to the entity.")))
 
-(defun.ps+ add-ecs-component-list (entity &rest component-list)
+(defun.ps+ add-ecs-component-list-impl (entity parent-component component-list)
   "Add components to an entity. If the entity is added to the environment, "
   (check-type entity ecs-entity)
+  (when parent-component
+    (check-type parent-component ecs-component))
   (dolist (component component-list)
     (check-type component ecs-component)
     (check-component-uniqueness component entity)
-    (push component (ecs-entity-components entity)))
+    (push-flat-tree-node component (ecs-entity-components entity)
+                         parent-component))
   (when (find-the-entity entity)
     (push-entity-to-all-target-system entity)))
 
-(defun.ps+ add-ecs-component (component entity)
+(defun.ps+ add-ecs-component-list (entity &rest component-list)
+  "Add components to an entity. If the entity is added to the environment, "
+  (add-ecs-component-list-impl entity nil component-list))
+
+(defun.ps+ add-ecs-component (component entity &optional parent-component)
   "Add a component to an entity. If the entity is added to the environment, "
-  (add-ecs-component-list entity component))
+  (add-ecs-component-list-impl entity parent-component (list component)))
 
 (defun.ps+ delete-ecs-component-type (component-type entity)
   "Delete a component whose type is component-type"
   (check-type entity ecs-entity)
-  (setf (ecs-entity-components entity)
-        (remove-if (lambda (component)
-                     (typep component component-type))
-                   (ecs-entity-components entity)))
+  (with-slots (components) entity
+    (setf components
+          (delete-flat-tree-node-if
+           (lambda (a-component)
+             (typep a-component component-type))
+           components)))
   (delete-entity-from-no-longer-belong-systems entity))
-
