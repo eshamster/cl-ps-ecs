@@ -25,7 +25,7 @@
 (defstruct.ps+ (cmp-parent (:include ecs-component)))
 (defstruct.ps+ (cmp-child (:include cmp-parent)))
 (defstruct.ps+ (cmp-grand-child (:include cmp-child)))
-(defstruct.ps+ (cmp-independent (:include ecs-component)))
+(defstruct.ps+ (cmp-independent (:include ecs-component)) a)
 
 (defvar.ps+ *test-counter* 0)
 
@@ -123,6 +123,35 @@
                     (add-ecs-component component entity)
                     (add-ecs-component component entity))
                   'simple-error))))
+  (subtest
+      "Test find-a-component"
+    (with-prove-in-both ()
+      (with-modify-env
+        (let ((ent (make-sample-entity))
+              (cmp0 (make-cmp-independent :a 0))
+              (cmp1 (make-cmp-independent :a 1))
+              (cmp2 (make-cmp-independent :a 2))
+              (cmp3 (make-cmp-independent :a 3)))
+          (add-ecs-component cmp0 ent)
+          (add-ecs-component cmp1 ent cmp0)
+          (add-ecs-component cmp2 ent cmp0)
+          (add-ecs-component cmp3 ent cmp2)
+          (flet ((is-found (search-value top-cmp expected)
+                   (let ((found (find-a-component
+                                 (lambda (cmp) (= (cmp-independent-a cmp) search-value))
+                                 top-cmp)))
+                     (if expected
+                         (is (cmp-independent-a found)
+                             expected)
+                         (ok (not found))))))
+            (dotimes (i 4)
+              (is-found i cmp0 i))
+            (is-found 99 cmp0 nil)
+            ;; search only it and its descendant
+            (is-found 0 cmp1 nil)))
+        ;; check type-error
+        (is-error (find-a-component (lambda (cmp) cmp) "not a component")
+                  'type-error))))
   (subtest
       "Test delete-ecs-component-type"
     (with-prove-in-both ()

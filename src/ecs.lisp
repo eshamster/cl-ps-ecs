@@ -8,6 +8,7 @@
         :cl-ps-ecs.flat-tree)
   (:export :includes-all-component-types
            :ecs-component
+           :find-a-component
            
            :make-ecs-entity
            :ecs-entity
@@ -53,6 +54,14 @@
 
 ;; ---- component ---- ;;
 (defstruct.ps+ (ecs-component (:include flat-tree-node)))
+
+(defun.ps+ find-a-component (predicate top-component)
+  "Find a component from top-component and its descendant by predicate"
+  (check-type top-component ecs-component)
+  (do-flat-tree (comp top-component)
+    (when (funcall predicate comp)
+      (return-from find-a-component comp)))
+  nil)
 
 ;; ---- entity ---- ;;
 (defvar.ps+ *entity-id-counter* 0)
@@ -214,7 +223,7 @@
 (defun.ps+ push-entity-to-system-if-needed (entity system)
   (when (is-target-entity entity system)
     (funcall (ecs-system-add-entity-hook system) entity)
-    (push entity (ecs-system-target-entities system))))
+    (pushnew entity (ecs-system-target-entities system))))
 
 (defun.ps+ push-entity-to-all-target-system (entity)
   (do-ecs-systems system
