@@ -54,7 +54,7 @@
                  (mapcar (lambda (promise) (frame-promise-result promise))
                          promise-list))))
      (lambda ()
-       (every (lambda (promise) (not (null (frame-promise-resolved-p promise))))
+       (every (lambda (promise) (frame-promise-resolved-p promise))
               promise-list))
      :timeout-frame timeout-frame)
     promise-new))
