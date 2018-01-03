@@ -25,6 +25,7 @@
            :find-the-entity
            :add-ecs-component
            :add-ecs-component-list
+           :delete-ecs-component
            :delete-ecs-component-type
 
            :add-entity-tag
@@ -310,6 +311,18 @@
 (defun.ps+ add-ecs-component (component entity &optional parent-component)
   "Add a component to an entity. If the entity is added to the environment, "
   (add-ecs-component-list-impl entity parent-component (list component)))
+
+(defun.ps+ delete-ecs-component (component entity)
+  (check-type entity ecs-entity)
+  (with-slots ((lst components)) entity
+    (let ((pre-length (length lst)))
+      (setf lst (delete-flat-tree-node-if
+                 (lambda (a-component)
+                   (eq a-component component))
+                 lst))
+      (when (= pre-length (length lst))
+        (error "The component has not been added."))))
+  (delete-entity-from-no-longer-belong-systems entity))
 
 (defun.ps+ delete-ecs-component-type (component-type entity)
   "Delete a component whose type is component-type"

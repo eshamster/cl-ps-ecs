@@ -153,6 +153,40 @@
         (is-error (find-a-component (lambda (cmp) cmp) "not a component")
                   'type-error))))
   (subtest
+      "Test delete-ecs-component"
+    (with-prove-in-both ()
+      (with-modify-env
+        (let ((ent (make-sample-entity))
+              (target-cmp (make-cmp-parent)))
+          (register-ecs-system "sys1" (make-sys-test1))
+          ;; registered to sys1
+          (add-ecs-entity ent)
+          (add-ecs-component-list
+           ent
+           target-cmp
+           (make-cmp-independent))
+          (delete-ecs-component target-cmp ent)
+          (ok (get-ecs-component 'cmp-independent ent))
+          (ok (not (get-ecs-component 'cmp-parent ent)))
+          (is-error (delete-ecs-component target-cmp ent)
+                    'simple-error))))
+    (subtest
+        "Test recursive deletion"
+      (with-prove-in-both ()
+        (with-modify-env
+          (let ((ent (make-sample-entity))
+                (parent-cmp (make-cmp-parent))
+                (child-cmp (make-cmp-independent))
+                (other-cmp (make-cmp-independent)))
+            (add-ecs-component-list ent parent-cmp other-cmp)
+            (add-ecs-component child-cmp ent parent-cmp)
+            (is (count-components ent) 3)
+            (delete-ecs-component parent-cmp ent)
+            (is (count-components ent) 1)))))
+    (with-prove-in-both ()
+      (is-error (delete-ecs-component-type 'cmp-parent 12)
+                'type-error)))
+  (subtest
       "Test delete-ecs-component-type"
     (with-prove-in-both ()
       (with-modify-env 
