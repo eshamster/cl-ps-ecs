@@ -43,6 +43,9 @@
            :process-all
            :add-entity-hook
            :delete-entity-hook
+
+           :add-delete-component-hook
+           :delete-delete-component-hook
            
            :do-ecs-components-of-entity
            :register-ecs-system
@@ -219,7 +222,8 @@
 (defun.ps+ clean-ecs-env ()
   (clean-ecs-basic-process)
   (clean-ecs-entities)
-  (clean-ecs-systems))
+  (clean-ecs-systems)
+  (setf *delete-component-hooks* '()))
 
 (defun.ps+ push-entity-to-system-if-needed (entity system)
   (when (is-target-entity entity system)
@@ -312,13 +316,28 @@
   "Add a component to an entity. If the entity is added to the environment, "
   (add-ecs-component-list-impl entity parent-component (list component)))
 
+(defvar.ps+ *delete-component-hooks* '())
+
+(defun.ps+ add-delete-component-hook (callback)
+  (pushnew callback *delete-component-hooks*))
+
+(defun.ps+ delete-delete-component-hook (callback)
+  (let ((pre-length (length *delete-component-hooks*)))
+    (setf *delete-component-hooks*
+          (remove callback *delete-component-hooks*))
+    (when (eq pre-length (length *delete-component-hooks*))
+      (error "The delete-component hook has not been added."))))
+
 (defun.ps+ delete-ecs-component-impl (predicate entity allow-no-deletion)
   (check-type entity ecs-entity)
   (with-slots ((lst components)) entity
     (let ((pre-length (length lst)))
       (setf lst (delete-flat-tree-node-if
                  (lambda (component)
-                   (funcall predicate component))
+                   (when (funcall predicate component)
+                     (dolist (hook *delete-component-hooks*)
+                       (funcall hook component))
+                     t))
                  lst))
       (when (and (not allow-no-deletion)
                  (= pre-length (length lst)))
