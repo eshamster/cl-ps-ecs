@@ -183,6 +183,35 @@
             (is (count-components ent) 3)
             (delete-ecs-component parent-cmp ent)
             (is (count-components ent) 1)))))
+    (subtest
+        "Test delete-component-hook"
+      (with-prove-in-both ()
+        (with-modify-env
+          (let* ((counter 0)
+                 (ent (make-sample-entity))
+                 (target-cmp (make-cmp-parent))
+                 (other-cmp1 (make-cmp-independent))
+                 (other-cmp2 (make-cmp-independent))
+                 (test-callback (lambda (component)
+                                  (if (eq component target-cmp)
+                                      (incf counter 100)
+                                      (incf counter)))))
+            (add-ecs-component-list
+             ent target-cmp other-cmp1 other-cmp2)
+            (add-ecs-entity ent)
+            (is counter 0)
+            (add-delete-component-hook test-callback)
+            (delete-ecs-component target-cmp ent)
+            (is counter 100)
+            (delete-ecs-component other-cmp1 ent)
+            (is counter 101)
+            (delete-delete-component-hook test-callback)
+            ;; The hook is no longer invoked
+            (delete-ecs-component other-cmp2 ent)
+            (is counter 101)
+            ;; Error because of duplicated deletion
+            (is-error (delete-delete-component-hook test-callback)
+                      'simple-error)))))
     (with-prove-in-both ()
       (is-error (delete-ecs-component-type 'cmp-parent 12)
                 'type-error)))
