@@ -12,7 +12,7 @@
                 :is-list.ps+))
 (in-package :cl-ps-ecs-test.ecs)
 
-(plan 5)
+(plan 6)
 
 (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
 
@@ -259,6 +259,21 @@
     (with-prove-in-both ()
       (is-error (delete-ecs-component-type 'cmp-parent 12)
                 'type-error))))
+
+(subtest
+    "Check the reference change of *entity-list*"
+  ;; Note: In delete-ecs-entity, it replaces *entity-list* by a new list.
+  ;; So if we simply refer cl-ps-ecs.ecs::*entity-list* (in the JavaScript,
+  ;; it becomes clPsEcs_ecs._internal.ENTITYLIST), such change cannot be
+  ;; reflected to the referrer in JavaScript side.
+  ;; This test checks if we can avoid the issue.
+  (with-prove-in-both ()
+    (with-modify-env
+      (let ((entity (make-ecs-entity)))
+        (add-ecs-entity entity)
+        (is (count-entity-list) 1)
+        (delete-ecs-entity entity)
+        (is (count-entity-list) 0)))))
 
 (subtest
     "Test entity funcs"
