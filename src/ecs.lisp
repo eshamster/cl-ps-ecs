@@ -77,12 +77,15 @@
 
 (defvar.ps+ *entity-list* '())
 
+(defun.ps+ get-entity-list ()
+  *entity-list*)
+
 (defmacro.ps+ do-ecs-entity-tree ((var top-entity) &body body)
   `(do-flat-tree (,var ,top-entity)
      ,@body))
 
 (defmacro.ps+ do-ecs-entities (var &body body)
-  `(do-flat-tree-list (,var *entity-list*)
+  `(do-flat-tree-list (,var (get-entity-list))
      ,@body))
 
 (defun.ps+ clean-ecs-entities ()
@@ -165,6 +168,9 @@
 (defvar.ps+ *ecs-system-list* '()
   "An element of the list is a pair of (name system)")
 
+(defun.ps+ get-ecs-system-list ()
+  *ecs-system-list*)
+
 (defun.ps+ clean-ecs-systems ()
   (setf *ecs-system-list* '()))
 
@@ -181,10 +187,10 @@
   "Iterates all registered ecs-system. If need only the object of each system, write as (do-ecs-systems sys ...). If need also the registered name, write as (do-ecs-system (name sys) ...)."
   (with-gensyms (pair)
     (if (atom var)
-        `(dolist (,pair *ecs-system-list*)
+        `(dolist (,pair (get-ecs-system-list))
            (let ((,var (cadr ,pair)))
              ,@body))
-        `(dolist (,pair *ecs-system-list*)
+        `(dolist (,pair (get-ecs-system-list))
            (let ((,(car var) (car ,pair))
                  (,(cadr var) (cadr ,pair)))
              ,@body)))))
