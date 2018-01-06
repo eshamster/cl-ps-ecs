@@ -140,7 +140,8 @@
                    (let ((found (find-a-component
                                  (lambda (cmp) (= (cmp-independent-a cmp) search-value))
                                  top-cmp)))
-                     (if expected
+                     ;; Note: In JavaScript, 0 is interpreted as false in if clause.
+                     (if (not (null expected))
                          (is (cmp-independent-a found)
                              expected)
                          (ok (not found))))))
