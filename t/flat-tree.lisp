@@ -143,6 +143,26 @@
         (setf lst (delete-flat-tree-node parent lst))
         (ok (is-flat-tree lst :count 0))
         (ok (is-parent-node child parent)))))
+  (subtest "Hook"
+    (with-prove-in-both ()
+      (let ((parent (make-flat-tree-node))
+            (child (make-flat-tree-node))
+            (g-child (make-flat-tree-node))
+            (lst '())
+            (count 0))
+        (push-flat-tree-node parent lst)
+        (push-flat-tree-node child lst parent)
+        (push-flat-tree-node g-child lst child)
+        (ok (is-flat-tree lst :count 3))
+        ;; delete child
+        (setf lst (delete-flat-tree-node
+                   child lst
+                   (lambda (node)
+                     (cond ((eq node child) (incf count 1))
+                           ((eq node g-child) (incf count 10))
+                           (t (error "The node should not be deleted"))))))
+        (ok (is-flat-tree lst :count 1))
+        (is count 11))))
   (subtest "Error case"
     (subtest "Wrong type"
       (with-prove-in-both ()

@@ -140,7 +140,8 @@
                    (let ((found (find-a-component
                                  (lambda (cmp) (= (cmp-independent-a cmp) search-value))
                                  top-cmp)))
-                     (if expected
+                     ;; Note: In JavaScript, 0 is interpreted as false in if clause.
+                     (if (not (null expected))
                          (is (cmp-independent-a found)
                              expected)
                          (ok (not found))))))
@@ -190,25 +191,29 @@
           (let* ((counter 0)
                  (ent (make-sample-entity))
                  (target-cmp (make-cmp-parent))
+                 (child-cmp (make-cmp-child))
                  (other-cmp1 (make-cmp-independent))
                  (other-cmp2 (make-cmp-independent))
                  (test-callback (lambda (component)
-                                  (if (eq component target-cmp)
-                                      (incf counter 100)
-                                      (incf counter)))))
+                                  (incf counter
+                                        (cond
+                                          ((eq component target-cmp) 100)
+                                          ((eq component child-cmp) 10)
+                                          (t 1))))))
             (add-ecs-component-list
              ent target-cmp other-cmp1 other-cmp2)
+            (add-ecs-component child-cmp ent target-cmp)
             (add-ecs-entity ent)
             (is counter 0)
             (add-delete-component-hook test-callback)
             (delete-ecs-component target-cmp ent)
-            (is counter 100)
+            (is counter 110)
             (delete-ecs-component other-cmp1 ent)
-            (is counter 101)
+            (is counter 111)
             (delete-delete-component-hook test-callback)
             ;; The hook is no longer invoked
             (delete-ecs-component other-cmp2 ent)
-            (is counter 101)
+            (is counter 111)
             ;; Error because of duplicated deletion
             (is-error (delete-delete-component-hook test-callback)
                       'simple-error)))))
