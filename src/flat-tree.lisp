@@ -71,7 +71,10 @@ Because this function can destruct the lst, caller should overwrite lst by new r
   `(dolist (,var ,lst)
      ,@body))
 
-(defun.ps+ delete-flat-tree-node (node place-lst)
+(defun.ps+ exec-nothing (&rest _)
+  (declare (ignore _)))
+
+(defun.ps+ delete-flat-tree-node (node place-lst &optional (callback #'exec-nothing))
   "Delete a flat-tree node from the place-lst.
 Because this function destruct the place-lst, caller should overwrite place-lst by new returned list."
   (check-type node flat-tree-node)
@@ -87,6 +90,7 @@ Because this function destruct the place-lst, caller should overwrite place-lst 
   (labels ((rec (one-node lst)
              (if (flat-tree-node-registerp one-node)
                  (let ((removed-lst (remove one-node lst)))
+                   (funcall callback one-node)
                    (setf (flat-tree-node-registerp one-node) nil)
                    (dolist (child (flat-tree-node-children one-node))
                      (setf removed-lst (rec child removed-lst)))
@@ -94,7 +98,7 @@ Because this function destruct the place-lst, caller should overwrite place-lst 
                  lst)))
     (rec node place-lst)))
 
-(defun.ps+ delete-flat-tree-node-if (predicate place-lst)
+(defun.ps+ delete-flat-tree-node-if (predicate place-lst &optional (callback #'exec-nothing))
   "Delete a flat-tree node that becomes true in the predicate from the place-lst.
 Because this function destruct the place-lst, caller should overwrite place-lst by new returned list.
 Note: When parent and child are deleted at the same time, it is not guaranteed that their relationship is kept or not."
@@ -106,5 +110,5 @@ Note: When parent and child are deleted at the same time, it is not guaranteed t
     ;;       so registerp should be checked before deletion.
     (dolist (node delete-lst)
       (when (flat-tree-node-registerp node)
-        (setf place-lst (delete-flat-tree-node node place-lst)))))
+        (setf place-lst (delete-flat-tree-node node place-lst callback)))))
   place-lst)
