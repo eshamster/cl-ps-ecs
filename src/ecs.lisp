@@ -339,12 +339,10 @@
   (with-slots ((lst components)) entity
     (let ((pre-length (length lst)))
       (setf lst (delete-flat-tree-node-if
+                 predicate lst
                  (lambda (component)
-                   (when (funcall predicate component)
-                     (dolist (hook *delete-component-hooks*)
-                       (funcall hook component))
-                     t))
-                 lst))
+                   (dolist (hook *delete-component-hooks*)
+                     (funcall hook component)))))
       (when (and (not allow-no-deletion)
                  (= pre-length (length lst)))
         (error "The component has not been added."))))
