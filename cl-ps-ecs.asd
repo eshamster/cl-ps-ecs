@@ -7,11 +7,6 @@
   Author: eshamster (hamgoostar@gmail.com)
 |#
 
-(in-package :cl-user)
-(defpackage cl-ps-ecs-asd
-  (:use :cl :asdf))
-(in-package :cl-ps-ecs-asd)
-
 (defsystem cl-ps-ecs
   :version "0.1"
   :author "eshamster"
@@ -35,4 +30,18 @@
                                :fill-pointer t)))
           (setf (fill-pointer seq) (read-sequence seq stream))
           seq)))
-  :in-order-to ((test-op (test-op cl-ps-ecs-test))))
+  :in-order-to ((test-op (test-op cl-ps-ecs/t))))
+
+(defsystem cl-ps-ecs/t
+  :class :package-inferred-system
+  :depends-on (:ps-experiment
+               :ps-experiment/t/test-utils
+               :parenscript
+               :cl-js
+               :rove
+               "cl-ps-ecs/t/utils"
+               "cl-ps-ecs/t/flat-tree"
+               "cl-ps-ecs/t/basic-process"
+               "cl-ps-ecs/t/frame-promise"
+               "cl-ps-ecs/t/ecs")
+  :perform (test-op (o c) (symbol-call :rove '#:run c)))
