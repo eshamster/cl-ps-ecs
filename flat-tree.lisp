@@ -1,5 +1,5 @@
 (in-package :cl-user)
-(defpackage cl-ps-ecs.flat-tree
+(defpackage cl-ps-ecs/flat-tree
   (:use :cl
         :parenscript
         :ps-experiment)
@@ -17,7 +17,7 @@
            :do-flat-tree-list
            :delete-flat-tree-node
            :delete-flat-tree-node-if))
-(in-package :cl-ps-ecs.flat-tree)
+(in-package :cl-ps-ecs/flat-tree)
 
 ;; This package is internally used for ecs-entity and ecs-component.
 ;; The structure is required for them.

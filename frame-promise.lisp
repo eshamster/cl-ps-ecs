@@ -1,15 +1,15 @@
 (in-package :cl-user)
-(defpackage cl-ps-ecs.frame-promise
+(defpackage cl-ps-ecs/frame-promise
   (:use :cl
         :parenscript
         :ps-experiment
-        :cl-ps-ecs.basic-process)
+        :cl-ps-ecs/basic-process)
   (:export :frame-promise
            :frame-promise-p
            :init-frame-promise
            :frame-promise-then
            :frame-promise-all))
-(in-package :cl-ps-ecs.frame-promise)
+(in-package :cl-ps-ecs/frame-promise)
 
 ;; The frame-promise is inspired from JavaScript's Promise.
 ;; It is checked that each frame-promise is resolved in first of frame (ecs-main).

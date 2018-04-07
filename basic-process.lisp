@@ -1,5 +1,4 @@
-(in-package :cl-user)
-(defpackage cl-ps-ecs.basic-process
+(defpackage cl-ps-ecs/basic-process
   (:use :cl
         :parenscript
         :ps-experiment)
@@ -9,7 +8,7 @@
            :register-next-frame-func
            :register-nframes-after-func
            :register-func-with-pred))
-(in-package :cl-ps-ecs.basic-process)
+(in-package :cl-ps-ecs/basic-process)
 
 (defvar.ps+ *next-frame-func-list* '())
 

@@ -16,19 +16,12 @@
   :version "0.1"
   :author "eshamster"
   :license "LLGPL"
+  :class :package-inferred-system
   :depends-on (:parenscript
                :alexandria
                :ps-experiment
-               :cl-reexport)
-  :components ((:module "src"
-                :serial t
-                :components
-                ((:file "utils")
-                 (:file "flat-tree")
-                 (:file "basic-process")
-                 (:file "frame-promise")
-                 (:file "ecs")
-                 (:file "cl-ps-ecs"))))
+               :cl-reexport
+               "cl-ps-ecs/main")
   :description "[WIP] Entity-Component-System written by ParenScript (Common Lisp) "
   :long-description
   #.(with-open-file (stream (merge-pathnames
