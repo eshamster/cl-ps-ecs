@@ -1,5 +1,4 @@
-(in-package :cl-user)
-(defpackage cl-ps-ecs.utils
+(defpackage cl-ps-ecs/utils
   (:use :cl
         :parenscript
         :ps-experiment)
@@ -8,7 +7,7 @@
            :call-ecs-hooks
            :delete-from-ecs-hooks
            :clean-ecs-hooks))
-(in-package :cl-ps-ecs.utils)
+(in-package :cl-ps-ecs/utils)
 
 (defun.ps+ includes-all-component-types (target-component-types components)
   (every (lambda (type)

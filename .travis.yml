@@ -12,10 +12,10 @@ env:
 
 install:
   - curl -L https://raw.githubusercontent.com/snmsts/roswell/release/scripts/install-for-ci.sh | sh
-  - (cd ${ROSWELL_INSTALL_DIR}/local-projects ; git clone https://github.com/eshamster/ps-experiment.git)
+  - ros install eshamster/ps-experiment
+  - ros install fukamachi/rove
   - ros -e '(ql:register-local-projects)' -q
-  - ros install ps-experiment
 
 script:
-  - run-prove-for-ps *-test.asd
+  - rove *.asd
 

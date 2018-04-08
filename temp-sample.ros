@@ -1,0 +1,69 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#| <A sample script to demonstrate cl-ps-ecs>
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ql:quickload :cl-ps-ecs))
+
+(defpackage :ros.script.temp-sample.ros.3688647387
+  (:use :cl
+        :cl-ps-ecs))
+(in-package :ros.script.temp-sample.ros.3688647387)
+
+;; --- define components --- ;;
+(defstruct (vector-2d (:include ecs-component)) (x 0) (y 0))
+(defstruct (position-2d (:include vector-2d)))
+(defstruct (velocity-2d (:include vector-2d)))
+
+;; --- define a system --- ;;
+(defun process-move-system (entity)
+  (with-ecs-components ((pos position-2d) (vel velocity-2d)) entity
+    (incf (position-2d-x pos) (velocity-2d-x vel))
+    (incf (position-2d-y pos) (velocity-2d-y vel))))
+
+(defstruct (move-system
+             (:include ecs-system
+                       (target-component-types '(position-2d velocity-2d))
+                       (process #'process-move-system))))
+
+(register-ecs-system :move (make-move-system))
+
+;; --- define entities --- ;;
+
+(let ((entity (make-ecs-entity)))
+  (add-ecs-component-list
+   entity
+   (make-position-2d :x 0 :y 0)
+   (make-velocity-2d :x 1 :y 0))
+  (add-ecs-entity entity))
+
+(let ((entity (make-ecs-entity)))
+  (add-ecs-component-list
+   entity
+   (make-position-2d :x 0 :y 0)
+   (make-velocity-2d :x 0 :y -1))
+  (add-ecs-entity entity))
+
+;; Because this entity has no velosity-2d component, 
+;; it is not processed by the move-system.
+(let ((entity (make-ecs-entity)))
+  (add-ecs-component-list
+   entity
+   (make-position-2d :x 0 :y 0))
+  (add-ecs-entity entity))
+
+(defun print-all-entities ()
+  (do-ecs-entities entity
+    (with-ecs-components (position-2d) entity
+      (format t "ID = ~D, pos = (~A, ~A)~%"
+              (ecs-entity-id entity)
+              (vector-2d-x position-2d)
+              (vector-2d-y position-2d)))))
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (print-all-entities)
+  (format t "--- Run ecs-main ---~%")
+  (ecs-main)
+  (print-all-entities))
