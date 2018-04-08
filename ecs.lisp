@@ -1,11 +1,10 @@
-(in-package :cl-user)
-(defpackage cl-ps-ecs.ecs
+(defpackage cl-ps-ecs/ecs
   (:use :cl
         :parenscript
         :ps-experiment
-        :cl-ps-ecs.utils
-        :cl-ps-ecs.basic-process
-        :cl-ps-ecs.flat-tree)
+        :cl-ps-ecs/utils
+        :cl-ps-ecs/basic-process
+        :cl-ps-ecs/flat-tree)
   (:export :includes-all-component-types
            :ecs-component
            :find-a-component
@@ -54,7 +53,7 @@
   (:import-from :alexandria
                 :symbolicate
                 :with-gensyms))
-(in-package :cl-ps-ecs.ecs)
+(in-package :cl-ps-ecs/ecs)
 
 ;; ---- component ---- ;;
 (defstruct.ps+ (ecs-component (:include flat-tree-node)))
