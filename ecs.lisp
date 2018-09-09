@@ -272,7 +272,7 @@ When leaving the with scope, default parent is reverted."
                      (add-ecs-entity ,new-parent))
                    (setf-default-ecs-entity-parent ,new-parent)
                    ,@body)
-         (setf-default-ecs-entity-parent nil)))))
+         (setf-default-ecs-entity-parent ,old-parent)))))
 
 (defun.ps+ add-ecs-entity (entity &optional (parent *default-ecs-entity-parent*))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
