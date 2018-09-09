@@ -16,6 +16,7 @@
            :ecs-entity-parent
            :get-ecs-component
            :with-ecs-components
+           :with-ecs-entity-parent
            :add-ecs-entity
            :add-ecs-entity-to-buffer
            :delete-ecs-entity
@@ -254,7 +255,26 @@
     (unless (is-target-entity entity system)
       (delete-entity-from-system-if-registered entity system))))
 
-(defun.ps+ add-ecs-entity (entity &optional (parent nil))
+(defvar.ps+ *default-ecs-entity-parent* nil)
+
+;; Note: In JavaScript environment, setf to variable in other package can't work.
+(defun.ps+ setf-default-ecs-entity-parent (parent)
+  (setf *default-ecs-entity-parent* parent))
+
+(defmacro.ps+ with-ecs-entity-parent ((parent) &body body)
+  "Set a default parent for add-ecs-entity.
+When leaving the with scope, default parent is reverted."
+  (with-gensyms (old-parent new-parent)
+    `(let ((,old-parent *default-ecs-entity-parent*)
+           (,new-parent ,parent))
+       (unwind-protect
+            (progn (unless (find-the-entity ,new-parent)
+                     (add-ecs-entity ,new-parent))
+                   (setf-default-ecs-entity-parent ,new-parent)
+                   ,@body)
+         (setf-default-ecs-entity-parent nil)))))
+
+(defun.ps+ add-ecs-entity (entity &optional (parent *default-ecs-entity-parent*))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
   (check-type entity ecs-entity)
   (when parent
@@ -264,7 +284,7 @@
     (push-entity-to-all-target-system target))
   entity)
 
-(defun.ps+ add-ecs-entity-to-buffer (entity &optional (parent nil))
+(defun.ps+ add-ecs-entity-to-buffer (entity &optional (parent *default-ecs-entity-parent*))
   "Add the entity to the buffer of the global list. They are added in the loop, ecs-main. This is useful for adding entities in do-ecs-entities loop."
   (register-next-frame-func
    #'(lambda () (add-ecs-entity entity parent))))
