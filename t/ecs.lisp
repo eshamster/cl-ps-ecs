@@ -318,6 +318,19 @@
         ;; execute
         (ecs-main)
         (ok (= *test-counter* 1))))
+    (testing "with-ecs-entity-parent"
+      (with-modify-env
+        (let ((parent (make-ecs-entity))
+              (child (make-ecs-entity)))
+          (with-ecs-entity-parent (parent)
+            (ok (find-the-entity parent))
+            (add-ecs-entity child)
+            (ok (eq (ecs-entity-parent child) parent))
+            (delete-ecs-entity parent)
+            (ok (not (find-the-entity child)))))
+        (let ((entity (make-ecs-entity)))
+          (add-ecs-entity entity)
+          (ok (not (ecs-entity-parent entity))))))
     (testing "test if descendants are registered to systems"
       (with-modify-env
         (add-sample-entities-for-inherit
