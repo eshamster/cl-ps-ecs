@@ -16,7 +16,9 @@
            :do-flat-tree
            :do-flat-tree-list
            :delete-flat-tree-node
-           :delete-flat-tree-node-if))
+           :delete-flat-tree-node-if
+
+           :move-flat-tree-node))
 (in-package :cl-ps-ecs/flat-tree)
 
 ;; This package is internally used for ecs-entity and ecs-component.
@@ -112,3 +114,16 @@ Note: When parent and child are deleted at the same time, it is not guaranteed t
       (when (flat-tree-node-registerp node)
         (setf place-lst (delete-flat-tree-node node place-lst callback)))))
   place-lst)
+
+(defun.ps+ move-flat-tree-node (node new-parent)
+  "Move a flat-tree node under a new-parent."
+  (check-type node flat-tree-node)
+  (when new-parent
+    (check-type new-parent flat-tree-node))
+  (let ((old-parent (flat-tree-node-parent node)))
+    (setf (flat-tree-node-parent node) new-parent)
+    (when new-parent
+      (push node (flat-tree-node-children new-parent)))
+    (when old-parent
+      (with-slots (children) old-parent
+        (setf children (remove node children))))))

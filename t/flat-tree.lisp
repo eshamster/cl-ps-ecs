@@ -259,3 +259,37 @@
         (check-type node flat-tree-node)
         (incf count))
       (ok (= count 3)))))
+
+(deftest.ps+ for-move-flat-tree-node
+  (testing "Normal case"
+    (testing "Case where node doesn't have parent"
+      (let ((parent (make-flat-tree-node))
+            (child (make-flat-tree-node))
+            (lst '()))
+        (push-flat-tree-node parent lst)
+        (push-flat-tree-node child lst)
+        (ok (not (is-parent-node child parent)))
+        (move-flat-tree-node child parent)
+        (ok (is-parent-node child parent))))
+    (testing "Case where node has parent"
+      (let ((first-parent (make-flat-tree-node))
+            (second-parent (make-flat-tree-node))
+            (child (make-flat-tree-node))
+            (lst '()))
+        (push-flat-tree-node first-parent lst)
+        (push-flat-tree-node second-parent lst)
+        (push-flat-tree-node child lst first-parent)
+        (ok (is-parent-node child first-parent))
+        (ok (not (is-parent-node child second-parent)))
+        (move-flat-tree-node child second-parent)
+        (ok (not (is-parent-node child first-parent)))
+        (ok (is-parent-node child second-parent))))
+    (testing "Remove by nil parent"
+      (let ((parent (make-flat-tree-node))
+            (child (make-flat-tree-node))
+            (lst '()))
+        (push-flat-tree-node parent lst)
+        (push-flat-tree-node child lst parent)
+        (ok (is-parent-node child parent))
+        (move-flat-tree-node child nil)
+        (ok (not (is-parent-node child parent)))))))
