@@ -259,6 +259,8 @@
 (defvar.ps+ *default-ecs-entity-parent* nil)
 
 ;; Note: In JavaScript environment, setf to variable in other package can't work.
+(defun.ps+ get-default-ecs-entity-parent ()
+  *default-ecs-entity-parent*)
 (defun.ps+ setf-default-ecs-entity-parent (parent)
   (setf *default-ecs-entity-parent* parent))
 
@@ -266,7 +268,7 @@
   "Set a default parent for add-ecs-entity.
 When leaving the with scope, default parent is reverted."
   (with-gensyms (old-parent new-parent)
-    `(let ((,old-parent *default-ecs-entity-parent*)
+    `(let ((,old-parent (get-default-ecs-entity-parent))
            (,new-parent ,parent))
        (unwind-protect
             (progn (if (find-the-entity ,new-parent)
