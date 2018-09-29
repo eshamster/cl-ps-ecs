@@ -269,8 +269,9 @@ When leaving the with scope, default parent is reverted."
     `(let ((,old-parent *default-ecs-entity-parent*)
            (,new-parent ,parent))
        (unwind-protect
-            (progn (unless (find-the-entity ,new-parent)
-                     (add-ecs-entity ,new-parent))
+            (progn (if (find-the-entity ,new-parent)
+                       (move-ecs-entity ,new-parent ,old-parent)
+                       (add-ecs-entity ,new-parent))
                    (setf-default-ecs-entity-parent ,new-parent)
                    ,@body)
          (setf-default-ecs-entity-parent ,old-parent)))))
