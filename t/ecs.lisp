@@ -384,6 +384,21 @@
              (ok (find-the-entity parent))
              (ng (find-the-entity child))
              (ng (find-the-entity grandchild)))))))
+    (testing "Test move-ecs-entity"
+      (with-modify-env
+        (let ((parent1 (make-ecs-entity))
+              (parent2 (make-ecs-entity))
+              (child (make-ecs-entity)))
+          (add-ecs-entity parent1)
+          (add-ecs-entity parent2)
+          (add-ecs-entity child parent1)
+          (ok (eq (ecs-entity-parent child) parent1))
+          (move-ecs-entity child parent2)
+          (ok (eq (ecs-entity-parent child) parent2))
+          (move-ecs-entity child nil)
+          (ok (null (ecs-entity-parent child)))
+          (move-ecs-entity child parent1)
+          (ok (eq (ecs-entity-parent child) parent1)))))
     (testing "test deleteing toplevel entity"
       (with-modify-env
         (add-sample-entities-for-inherit

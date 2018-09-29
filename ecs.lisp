@@ -20,6 +20,7 @@
            :add-ecs-entity
            :add-ecs-entity-to-buffer
            :delete-ecs-entity
+           :move-ecs-entity
            :do-ecs-entities
            :find-a-entity
            :find-the-entity
@@ -296,10 +297,12 @@ When leaving the with scope, default parent is reverted."
   (do-ecs-entity-tree (target entity)
     (delete-entity-from-all-systems target)))
 
-;; [WIP]
 (defun.ps+ move-ecs-entity (entity new-parent)
-  ;; TDOO: error if has not registered
-  ())
+  "Move an entity under a new-parent."
+  (check-type entity ecs-entity)
+  (when new-parent
+    (check-type new-parent ecs-entity))
+  (move-flat-tree-node entity new-parent))
 
 (defun.ps+ register-ecs-system (name system)
   (check-type system ecs-system)
