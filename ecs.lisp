@@ -20,6 +20,7 @@
            :add-ecs-entity
            :add-ecs-entity-to-buffer
            :delete-ecs-entity
+           :move-ecs-entity
            :do-ecs-entities
            :find-a-entity
            :find-the-entity
@@ -258,6 +259,8 @@
 (defvar.ps+ *default-ecs-entity-parent* nil)
 
 ;; Note: In JavaScript environment, setf to variable in other package can't work.
+(defun.ps+ get-default-ecs-entity-parent ()
+  *default-ecs-entity-parent*)
 (defun.ps+ setf-default-ecs-entity-parent (parent)
   (setf *default-ecs-entity-parent* parent))
 
@@ -265,11 +268,12 @@
   "Set a default parent for add-ecs-entity.
 When leaving the with scope, default parent is reverted."
   (with-gensyms (old-parent new-parent)
-    `(let ((,old-parent *default-ecs-entity-parent*)
+    `(let ((,old-parent (get-default-ecs-entity-parent))
            (,new-parent ,parent))
        (unwind-protect
-            (progn (unless (find-the-entity ,new-parent)
-                     (add-ecs-entity ,new-parent))
+            (progn (if (find-the-entity ,new-parent)
+                       (move-ecs-entity ,new-parent ,old-parent)
+                       (add-ecs-entity ,new-parent))
                    (setf-default-ecs-entity-parent ,new-parent)
                    ,@body)
          (setf-default-ecs-entity-parent ,old-parent)))))
@@ -296,10 +300,12 @@ When leaving the with scope, default parent is reverted."
   (do-ecs-entity-tree (target entity)
     (delete-entity-from-all-systems target)))
 
-;; [WIP]
 (defun.ps+ move-ecs-entity (entity new-parent)
-  ;; TDOO: error if has not registered
-  ())
+  "Move an entity under a new-parent."
+  (check-type entity ecs-entity)
+  (when new-parent
+    (check-type new-parent ecs-entity))
+  (move-flat-tree-node entity new-parent))
 
 (defun.ps+ register-ecs-system (name system)
   (check-type system ecs-system)

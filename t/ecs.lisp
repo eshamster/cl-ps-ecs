@@ -319,18 +319,45 @@
         (ecs-main)
         (ok (= *test-counter* 1))))
     (testing "with-ecs-entity-parent"
-      (with-modify-env
-        (let ((parent (make-ecs-entity))
-              (child (make-ecs-entity)))
-          (with-ecs-entity-parent (parent)
-            (ok (find-the-entity parent))
-            (add-ecs-entity child)
-            (ok (eq (ecs-entity-parent child) parent))
-            (delete-ecs-entity parent)
-            (ok (not (find-the-entity child)))))
-        (let ((entity (make-ecs-entity)))
-          (add-ecs-entity entity)
-          (ok (not (ecs-entity-parent entity))))))
+      (testing "Single layer"
+        (with-modify-env
+          (let ((parent (make-ecs-entity))
+                (child (make-ecs-entity)))
+            (with-ecs-entity-parent (parent)
+              (ok (find-the-entity parent))
+              (add-ecs-entity child)
+              (ok (eq (ecs-entity-parent child) parent))
+              (delete-ecs-entity parent)
+              (ok (not (find-the-entity child)))))
+          (let ((entity (make-ecs-entity)))
+            (add-ecs-entity entity)
+            (ok (not (ecs-entity-parent entity))))))
+      (testing "Multiple layer"
+        (with-modify-env
+          (testing "Case where parents have NOT been registered"
+            (let ((parent1 (make-ecs-entity))
+                  (parent2 (make-ecs-entity)))
+              (with-ecs-entity-parent (parent1)
+                (ok (find-the-entity parent1))
+                (with-ecs-entity-parent (parent2)
+                  (ok (find-the-entity parent2))
+                  (ok (eq (ecs-entity-parent parent2) parent1))
+                  (let ((entity (make-ecs-entity)))
+                    (add-ecs-entity entity)
+                    (ok (eq (ecs-entity-parent entity) parent2))))
+                (let ((entity (make-ecs-entity)))
+                  (add-ecs-entity entity)
+                  (ok (eq (ecs-entity-parent entity) parent1))))))
+          (testing "Case where parents have been registered"
+            (let ((parent1 (make-ecs-entity))
+                  (parent2 (make-ecs-entity)))
+              (add-ecs-entity parent1)
+              (add-ecs-entity parent2)
+              (with-ecs-entity-parent (parent1)
+                (ok (find-the-entity parent1))
+                (with-ecs-entity-parent (parent2)
+                  (ok (find-the-entity parent2))
+                  (ok (eq (ecs-entity-parent parent2) parent1)))))))))
     (testing "test if descendants are registered to systems"
       (with-modify-env
         (add-sample-entities-for-inherit
@@ -384,6 +411,21 @@
              (ok (find-the-entity parent))
              (ng (find-the-entity child))
              (ng (find-the-entity grandchild)))))))
+    (testing "Test move-ecs-entity"
+      (with-modify-env
+        (let ((parent1 (make-ecs-entity))
+              (parent2 (make-ecs-entity))
+              (child (make-ecs-entity)))
+          (add-ecs-entity parent1)
+          (add-ecs-entity parent2)
+          (add-ecs-entity child parent1)
+          (ok (eq (ecs-entity-parent child) parent1))
+          (move-ecs-entity child parent2)
+          (ok (eq (ecs-entity-parent child) parent2))
+          (move-ecs-entity child nil)
+          (ok (null (ecs-entity-parent child)))
+          (move-ecs-entity child parent1)
+          (ok (eq (ecs-entity-parent child) parent1)))))
     (testing "test deleteing toplevel entity"
       (with-modify-env
         (add-sample-entities-for-inherit
