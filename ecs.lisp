@@ -73,7 +73,7 @@
 
 (defstruct.ps+ (ecs-entity (:include flat-tree-node))
   (id (incf *entity-id-counter*))
-  (tags '())
+  (tags (make-hash-table))
   (components '()))
 
 (defvar.ps+ *entity-list* '())
@@ -128,26 +128,30 @@
 
 ;; - about tag - ;;
 
+(defparameter *keyword-package* (find-package "KEYWORD"))
+
+(defun check-tag-type (tag)
+  (check-type tag symbol)
+  (assert (eq (symbol-package tag) *keyword-package*)))
+
+(defun.ps-only check-tag-type (tag)
+  (check-type tag string))
+
 (defun.ps+ add-entity-tag (entity &rest tags)
   (check-type entity ecs-entity)
   (dolist (tag tags)
-    (check-type tag string)
-    (push tag (ecs-entity-tags entity))))
+    (check-tag-type tag)
+    (setf (gethash tag (ecs-entity-tags entity)) t)))
 
 (defun.ps+ delete-entity-tag (entity tag)
   (check-type entity ecs-entity)
-  (check-type tag string)
-  (setf (ecs-entity-tags entity)
-        (remove-if (lambda (target-tag)
-                     (string= target-tag tag))
-                   (ecs-entity-tags entity))))
+  (check-tag-type tag)
+  (remhash tag (ecs-entity-tags entity)))
 
 (defun.ps+ has-entity-tag (entity tag)
   (check-type entity ecs-entity)
-  (check-type tag string)
-  (find-if (lambda (target-tag)
-             (string= target-tag tag))
-           (ecs-entity-tags entity)))
+  (check-tag-type tag)
+  (gethash tag (ecs-entity-tags entity)))
 
 (defun.ps+ check-entity-tags (entity &rest tags)
   (dolist (tag tags)
@@ -156,7 +160,7 @@
   t)
 
 (defun.ps+ find-a-entity-by-tag (tag)
-  (check-type tag string)
+  (check-tag-type tag)
   (find-a-entity (lambda (entity)
                    (has-entity-tag entity tag))))
 
