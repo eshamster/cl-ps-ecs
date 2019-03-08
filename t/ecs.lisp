@@ -5,8 +5,8 @@
         :ps-experiment
         :rove
         :ps-experiment/t/test-utils)
-  (:import-from :cl-ps-ecs/ecs
-                :clean-ecs-env))
+  (:import-from :cl-ps-ecs/t/test-utils
+                :with-ecs-env))
 (in-package :cl-ps-ecs/t/ecs)
 
 (declaim #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
@@ -50,7 +50,8 @@
 
 (defmacro.ps+ with-modify-env (&body body)
   `(unwind-protect
-        (progn ,@body)
+        (with-ecs-env ()
+          ,@body)
      (progn (clean-ecs-env)
             (setf *test-counter* 0))))
 
