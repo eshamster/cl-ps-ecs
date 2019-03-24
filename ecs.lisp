@@ -16,6 +16,8 @@
            :ecs-entity-parent
            :get-ecs-component
            :with-ecs-components
+           :stack-default-ecs-entity-parent
+           :pop-default-ecs-entity-parent
            :with-ecs-entity-parent
            :add-ecs-entity
            :add-ecs-entity-to-buffer
@@ -260,13 +262,24 @@
     (unless (is-target-entity entity system)
       (delete-entity-from-system-if-registered entity system))))
 
-(defvar.ps+ *default-ecs-entity-parent* nil)
+(defvar.ps+ *default-ecs-entity-parent-stack* (list))
 
 ;; Note: In JavaScript environment, setf to variable in other package can't work.
 (defun.ps+ get-default-ecs-entity-parent ()
-  *default-ecs-entity-parent*)
-(defun.ps+ setf-default-ecs-entity-parent (parent)
-  (setf *default-ecs-entity-parent* parent))
+  (car *default-ecs-entity-parent-stack*))
+
+(defun.ps+ stack-default-ecs-entity-parent (new-parent)
+  (let ((old-parent (get-default-ecs-entity-parent)))
+    (if (find-the-entity new-parent)
+        (move-ecs-entity new-parent old-parent)
+        (add-ecs-entity new-parent))
+    (push new-parent *default-ecs-entity-parent-stack*)))
+
+(defun.ps+ pop-default-ecs-entity-parent ()
+  (let ((parent (get-default-ecs-entity-parent)))
+    (setf *default-ecs-entity-parent-stack*
+          (cdr *default-ecs-entity-parent-stack*))
+    parent))
 
 (defmacro.ps+ with-ecs-entity-parent ((parent) &body body)
   "Set a default parent for add-ecs-entity.
@@ -275,14 +288,11 @@ When leaving the with scope, default parent is reverted."
     `(let ((,old-parent (get-default-ecs-entity-parent))
            (,new-parent ,parent))
        (unwind-protect
-            (progn (if (find-the-entity ,new-parent)
-                       (move-ecs-entity ,new-parent ,old-parent)
-                       (add-ecs-entity ,new-parent))
-                   (setf-default-ecs-entity-parent ,new-parent)
+            (progn (stack-default-ecs-entity-parent ,new-parent)
                    ,@body)
-         (setf-default-ecs-entity-parent ,old-parent)))))
+         (pop-default-ecs-entity-parent)))))
 
-(defun.ps+ add-ecs-entity (entity &optional (parent *default-ecs-entity-parent*))
+(defun.ps+ add-ecs-entity (entity &optional (parent (get-default-ecs-entity-parent)))
   "Add the entity to the global list. Then push it and its descendatns to the system if they have target components."
   (check-type entity ecs-entity)
   (when parent
@@ -292,7 +302,7 @@ When leaving the with scope, default parent is reverted."
     (push-entity-to-all-target-system target))
   entity)
 
-(defun.ps+ add-ecs-entity-to-buffer (entity &optional (parent *default-ecs-entity-parent*))
+(defun.ps+ add-ecs-entity-to-buffer (entity &optional (parent (get-default-ecs-entity-parent)))
   "Add the entity to the buffer of the global list. They are added in the loop, ecs-main. This is useful for adding entities in do-ecs-entities loop."
   (register-next-frame-func
    #'(lambda () (add-ecs-entity entity parent))))
