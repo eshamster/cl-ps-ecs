@@ -55,9 +55,10 @@ Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, execute
 
 (defun.ps+ execute-all-registered-funcs ()
   ;; Reverse to execute functions in order of registration.
-  (dolist (func (reverse *next-frame-func-list*))
-    (funcall func))
-  (setf *next-frame-func-list* '()))
+  (let ((func-list (reverse *next-frame-func-list*)))
+    (setf *next-frame-func-list* '())
+    (dolist (func func-list)
+      (funcall func))))
 
 (defun.ps+ execute-ecs-basic-process ()
   (execute-all-registered-funcs)
