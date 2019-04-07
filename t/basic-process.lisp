@@ -27,7 +27,21 @@
       (ok (= counter 22))
       ;; Check if registered functions are cleared after execution
       (execute-ecs-basic-process)
-      (ok (= counter 22)))))
+      (ok (= counter 22))))
+  (testing "nested register-next-frame-func"
+    (with-modify-env
+      (let ((counter 0))
+        (register-next-frame-func
+         #'(lambda ()
+             (incf counter)
+             (register-next-frame-func
+              #'(lambda () (incf counter 2)))))
+        (execute-ecs-basic-process)
+        (ok (= counter 1))
+        (execute-ecs-basic-process)
+        (ok (= counter 3))
+        (execute-ecs-basic-process)
+        (ok (= counter 3))))))
 
 (deftest.ps+ for-register-nframes-after-func
   (with-modify-env

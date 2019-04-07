@@ -10,13 +10,6 @@
            :register-func-with-pred))
 (in-package :cl-ps-ecs/basic-process)
 
-(defvar.ps+ *next-frame-func-list* '())
-
-(defun.ps+ register-next-frame-func (func)
-  "Register a function with no argument that is executed in first of next frame.
-Note: Some functions (Ex. add or delete resource) can cause troublesome problems if it is executed in frame. Use this wrapper when executing such functions."
-  (push func *next-frame-func-list*))
-
 (defstruct.ps+ func-with-pred func pred rest-timeout-frame name)
 
 (defvar.ps+ *func-with-pred-list* '())
@@ -53,16 +46,13 @@ Ex. If delayed-frames is 1, it will be executed in its next frame. If 2, execute
                                (decf rest-time)
                                (<= rest-time 0)))))
 
-(defun.ps+ execute-all-registered-funcs ()
-  ;; Reverse to execute functions in order of registration.
-  (dolist (func (reverse *next-frame-func-list*))
-    (funcall func))
-  (setf *next-frame-func-list* '()))
+(defun.ps+ register-next-frame-func (func)
+  "Register a function with no argument that is executed in first of next frame.
+Note: Some functions (Ex. add or delete resource) can cause troublesome problems if it is executed in frame. Use this wrapper when executing such functions."
+  (register-nframes-after-func func 0))
 
 (defun.ps+ execute-ecs-basic-process ()
-  (execute-all-registered-funcs)
   (execute-all-registered-funcs-with-pred))
 
 (defun.ps+ clean-ecs-basic-process ()
-  (setf *next-frame-func-list* '())
   (setf *func-with-pred-list* '()))
