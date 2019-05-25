@@ -284,9 +284,8 @@
 (defmacro.ps+ with-ecs-entity-parent ((parent) &body body)
   "Set a default parent for add-ecs-entity.
 When leaving the with scope, default parent is reverted."
-  (with-gensyms (old-parent new-parent)
-    `(let ((,old-parent (get-default-ecs-entity-parent))
-           (,new-parent ,parent))
+  (with-gensyms (new-parent)
+    `(let ((,new-parent ,parent))
        (unwind-protect
             (progn (stack-default-ecs-entity-parent ,new-parent)
                    ,@body)
