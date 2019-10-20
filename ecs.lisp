@@ -16,6 +16,7 @@
            :ecs-entity-parent
            :get-ecs-component
            :with-ecs-components
+           :get-default-ecs-entity-parent
            :stack-default-ecs-entity-parent
            :pop-default-ecs-entity-parent
            :with-ecs-entity-parent
