@@ -168,9 +168,11 @@
                    (has-entity-tag entity tag))))
 
 (defmacro.ps+ do-tagged-ecs-entities ((var tag) &body body)
-  `(do-ecs-entities ,var
-     (when (has-entity-tag ,var ,tag)
-       ,@body)))
+  (with-gensyms (g-tag)
+    `(let ((,g-tag ,tag))
+       (do-ecs-entities ,var
+         (when (has-entity-tag ,var ,g-tag)
+           ,@body)))))
 
 ;; ---- system ---- ;;
 (defvar.ps+ *ecs-system-list* '()
